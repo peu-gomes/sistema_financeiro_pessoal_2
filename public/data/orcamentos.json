@@ -1,0 +1,236 @@
+[
+  {
+    "id": "orcamento-fixo",
+    "tipo": "fixo",
+    "nome": "Orçamento Fixo (Recorrente)",
+    "itens": [
+      {
+        "id": "item-1",
+        "contaCodigo": "5.1.01.001",
+        "contaNome": "Aluguel",
+        "categoria": "despesa",
+        "valorPlanejado": 1500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-2",
+        "contaCodigo": "5.2.01.001",
+        "contaNome": "Energia e Água",
+        "categoria": "despesa",
+        "valorPlanejado": 300,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 10
+      },
+      {
+        "id": "item-3",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "categoria": "despesa",
+        "valorPlanejado": 1000,
+        "periodicidade": "mensal",
+        "ativo": true
+      },
+      {
+        "id": "item-4",
+        "contaCodigo": "5.4.01.001",
+        "contaNome": "Assinaturas e Serviços",
+        "categoria": "despesa",
+        "valorPlanejado": 150,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 15
+      },
+      {
+        "id": "item-5",
+        "contaCodigo": "5.5.01.001",
+        "contaNome": "Lazer e Entretenimento",
+        "categoria": "despesa",
+        "valorPlanejado": 400,
+        "periodicidade": "mensal",
+        "ativo": true
+      },
+      {
+        "id": "item-6",
+        "contaCodigo": "4.1.01.001",
+        "contaNome": "Salário",
+        "categoria": "receita",
+        "valorPlanejado": 5500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-7",
+        "contaCodigo": "4.1.02.002",
+        "contaNome": "IPVA",
+        "categoria": "despesa",
+        "valorPlanejado": 1200,
+        "periodicidade": "anual",
+        "ativo": true
+      }
+    ],
+    "criadoEm": "2025-12-01T08:00:00.000Z",
+    "atualizadoEm": "2025-12-08T01:43:29.172Z"
+  },
+  {
+    "id": "orcamento-2025-12",
+    "tipo": "mensal",
+    "nome": "Orçamento Dez/2025",
+    "mes": 12,
+    "ano": 2025,
+    "itens": [
+      {
+        "id": "item-1-2025-12",
+        "contaCodigo": "5.1.01.001",
+        "contaNome": "Aluguel",
+        "categoria": "despesa",
+        "valorPlanejado": 1500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-2-2025-12",
+        "contaCodigo": "5.2.01.001",
+        "contaNome": "Energia e Água",
+        "categoria": "despesa",
+        "valorPlanejado": 300,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 10
+      },
+      {
+        "id": "item-3-2025-12",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "categoria": "despesa",
+        "valorPlanejado": 1000,
+        "periodicidade": "mensal",
+        "ativo": true
+      },
+      {
+        "id": "item-4-2025-12",
+        "contaCodigo": "5.4.01.001",
+        "contaNome": "Assinaturas e Serviços",
+        "categoria": "despesa",
+        "valorPlanejado": 150,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 15
+      },
+      {
+        "id": "item-8-2025-12",
+        "contaCodigo": "5.6.01.001",
+        "contaNome": "Presente Natal",
+        "categoria": "despesa",
+        "valorPlanejado": 800,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "observacao": "Compras de fim de ano"
+      },
+      {
+        "id": "item-6-2025-12",
+        "contaCodigo": "4.1.01.001",
+        "contaNome": "Salário",
+        "categoria": "receita",
+        "valorPlanejado": 5500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-9-2025-12",
+        "contaCodigo": "4.2.01.001",
+        "contaNome": "13º Salário",
+        "categoria": "receita",
+        "valorPlanejado": 4500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 20,
+        "observacao": "Segunda parcela"
+      }
+    ],
+    "criadoEm": "2025-12-01T10:00:00.000Z",
+    "atualizadoEm": "2025-12-07T15:20:00.000Z"
+  },
+  {
+    "id": "orcamento-2026-01",
+    "tipo": "mensal",
+    "nome": "Orçamento Jan/2026",
+    "mes": 1,
+    "ano": 2026,
+    "itens": [
+      {
+        "id": "item-1-2026-1",
+        "contaCodigo": "5.1.01.001",
+        "contaNome": "Aluguel",
+        "categoria": "despesa",
+        "valorPlanejado": 1500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-2-2026-1",
+        "contaCodigo": "5.2.01.001",
+        "contaNome": "Energia e Água",
+        "categoria": "despesa",
+        "valorPlanejado": 300,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 10
+      },
+      {
+        "id": "item-3-2026-1",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "categoria": "despesa",
+        "valorPlanejado": 1000,
+        "periodicidade": "mensal",
+        "ativo": true
+      },
+      {
+        "id": "item-4-2026-1",
+        "contaCodigo": "5.4.01.001",
+        "contaNome": "Assinaturas e Serviços",
+        "categoria": "despesa",
+        "valorPlanejado": 150,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 15
+      },
+      {
+        "id": "item-5-2026-1",
+        "contaCodigo": "5.5.01.001",
+        "contaNome": "Lazer e Entretenimento",
+        "categoria": "despesa",
+        "valorPlanejado": 400,
+        "periodicidade": "mensal",
+        "ativo": true
+      },
+      {
+        "id": "item-6-2026-1",
+        "contaCodigo": "4.1.01.001",
+        "contaNome": "Salário",
+        "categoria": "receita",
+        "valorPlanejado": 5500,
+        "periodicidade": "mensal",
+        "ativo": true,
+        "diaVencimento": 5
+      },
+      {
+        "id": "item-7-2026-1",
+        "contaCodigo": "4.1.02.002",
+        "contaNome": "IPVA",
+        "categoria": "despesa",
+        "valorPlanejado": 1200,
+        "periodicidade": "anual",
+        "ativo": true
+      }
+    ],
+    "criadoEm": "2025-12-08T01:42:56.051Z"
+  }
+]

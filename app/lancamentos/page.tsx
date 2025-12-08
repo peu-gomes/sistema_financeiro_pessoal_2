@@ -1,0 +1,951 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { getLancamentos, createLancamento, deleteLancamento, getContas } from '@/lib/api';
+import type { Lancamento as LancamentoAPI, ContaBancaria } from '@/lib/api';
+import Header from '@/components/Header';
+
+type ModoPartidas = 'umUm' | 'debitoParaCreditos' | 'creditosParaDebito';
+
+// Interfaces
+interface Partida {
+  id: string;
+  contaCodigo: string;
+  contaNome: string;
+  natureza: 'debito' | 'credito';
+  valor: number;
+}
+
+interface Lancamento {
+  id: string;
+  data: string; // ISO date string (YYYY-MM-DD)
+  documento?: string;
+  historico: string;
+  partidas: Partida[];
+  criadoEm: string;
+  atualizadoEm?: string;
+}
+
+interface ContaBancaria {
+  id: string;
+  codigo: string;
+  nome: string;
+  tipoCC: 'sintetica' | 'analitica';
+  categoria: 'ativo' | 'passivo' | 'patrimonio' | 'receita' | 'despesa';
+  ativa: boolean;
+  subcontas?: ContaBancaria[];
+}
+
+// Modal de Lançamento
+interface ContaAnalitica {
+  codigo: string;
+  nome: string;
+  categoria: string;
+}
+
+interface ModalLancamentoProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSalvar: (lancamento: Lancamento) => void;
+  contasAnaliticas: ContaAnalitica[];
+  lancamentoEmEdicao?: Lancamento | null;
+}
+
+function ModalLancamento({ isOpen, onClose, onSalvar, contasAnaliticas, lancamentoEmEdicao }: ModalLancamentoProps) {
+  const [data, setData] = useState(new Date().toISOString().split('T')[0]);
+  const [documento, setDocumento] = useState('');
+  const [historico, setHistorico] = useState('');
+  const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [modoPartidas, setModoPartidas] = useState<ModoPartidas>('umUm');
+  const [erro, setErro] = useState('');
+
+  const criarPartidasIniciais = (modo: ModoPartidas): Partida[] => {
+    if (modo === 'umUm') {
+      return [
+        { id: `${Date.now()}-d`, contaCodigo: '', contaNome: '', natureza: 'debito', valor: 0 },
+        { id: `${Date.now()}-c`, contaCodigo: '', contaNome: '', natureza: 'credito', valor: 0 },
+      ];
+    }
+
+    if (modo === 'debitoParaCreditos') {
+      return [
+        { id: `${Date.now()}-d`, contaCodigo: '', contaNome: '', natureza: 'debito', valor: 0 },
+        { id: `${Date.now()}-c1`, contaCodigo: '', contaNome: '', natureza: 'credito', valor: 0 },
+      ];
+    }
+
+    return [
+      { id: `${Date.now()}-c`, contaCodigo: '', contaNome: '', natureza: 'credito', valor: 0 },
+      { id: `${Date.now()}-d1`, contaCodigo: '', contaNome: '', natureza: 'debito', valor: 0 },
+    ];
+  };
+
+  const isMultiCredito = modoPartidas === 'debitoParaCreditos';
+  const isMultiDebito = modoPartidas === 'creditosParaDebito';
+  const isUmUm = modoPartidas === 'umUm';
+  const multiSide = isMultiCredito ? 'credito' : isMultiDebito ? 'debito' : null;
+  const valorUmUm = isUmUm ? (partidas[0]?.valor || 0) : 0;
+
+  const atualizarValorUmUm = (valor: number) => {
+    if (!isUmUm) return;
+    setPartidas(partidas.map(p => ({ ...p, valor })));
+  };
+
+  // Resetar ao abrir
+  useEffect(() => {
+    if (isOpen) {
+      if (lancamentoEmEdicao) {
+        // Editar: carregar dados existentes
+        setData(lancamentoEmEdicao.data);
+        setDocumento(lancamentoEmEdicao.documento || '');
+        setHistorico(lancamentoEmEdicao.historico);
+        setPartidas(lancamentoEmEdicao.partidas);
+        setModoPartidas('umUm'); // Para edição, mantém modo 1:1 por enquanto
+      } else {
+        // Criar novo: resetar valores
+        setData(new Date().toISOString().split('T')[0]);
+        setDocumento('');
+        setHistorico('');
+        setPartidas(criarPartidasIniciais(modoPartidas));
+      }
+      setErro('');
+    }
+  }, [isOpen, modoPartidas, lancamentoEmEdicao]);
+
+  const calcularTotais = () => {
+    const debitos = partidas.filter(p => p.natureza === 'debito').reduce((sum, p) => sum + p.valor, 0);
+    const creditos = partidas.filter(p => p.natureza === 'credito').reduce((sum, p) => sum + p.valor, 0);
+    return { debitos, creditos, diferenca: debitos - creditos };
+  };
+
+  const adicionarPartida = (natureza: 'debito' | 'credito') => {
+    if (multiSide && natureza !== multiSide) return;
+
+    setPartidas([...partidas, {
+      id: Date.now().toString(),
+      contaCodigo: '',
+      contaNome: '',
+      natureza,
+      valor: 0
+    }]);
+  };
+
+  const removerPartida = (id: string) => {
+    setPartidas(partidas.filter(p => p.id !== id));
+  };
+
+  const atualizarPartida = (id: string, campo: keyof Partida, valor: any) => {
+    setPartidas(partidas.map(p => p.id === id ? { ...p, [campo]: valor } : p));
+  };
+
+  const selecionarConta = (id: string, entrada: string) => {
+    if (!entrada.trim()) {
+      atualizarPartida(id, 'contaCodigo', '');
+      atualizarPartida(id, 'contaNome', '');
+      return;
+    }
+
+    const entradaNormalizada = entrada.trim();
+
+    // Primeiro tenta extrair o código se vier no formato "codigo - nome"
+    let contaEncontrada = null;
+    
+    // Se tem " - " no texto, extrai o código
+    if (entradaNormalizada.includes(' - ')) {
+      const partes = entradaNormalizada.split(' - ');
+      const codigo = partes[0].trim();
+      contaEncontrada = contasAnaliticas.find(c => c.codigo === codigo);
+      console.log('Buscando por formato "codigo - nome":', codigo, contaEncontrada);
+    }
+    
+    // Se não encontrou, busca normalmente (por código ou nome)
+    if (!contaEncontrada) {
+      const entradaLower = entradaNormalizada.toLowerCase();
+      
+      // Busca exata por código
+      contaEncontrada = contasAnaliticas.find(c => c.codigo.toLowerCase() === entradaLower);
+      console.log('Buscando por código exato:', entradaLower, contaEncontrada);
+      
+      // Se não encontrou, busca exata por nome
+      if (!contaEncontrada) {
+        contaEncontrada = contasAnaliticas.find(c => c.nome.toLowerCase() === entradaLower);
+        console.log('Buscando por nome exato:', entradaLower, contaEncontrada);
+      }
+      
+      // Se não encontrou, busca parcial
+      if (!contaEncontrada) {
+        contaEncontrada = contasAnaliticas.find((c) => {
+          const codigoNome = `${c.codigo} - ${c.nome}`.toLowerCase();
+          const startsWithMatch = codigoNome.startsWith(entradaLower);
+          const nomeIncludesMatch = c.nome.toLowerCase().includes(entradaLower);
+          const codigoIncludesMatch = c.codigo.toLowerCase().includes(entradaLower);
+          
+          return startsWithMatch || nomeIncludesMatch || codigoIncludesMatch;
+        });
+        console.log('Buscando por parcial match:', entradaLower, contaEncontrada);
+      }
+    }
+
+    if (contaEncontrada) {
+      console.log('✅ Conta encontrada, atualizando partida:', { id, codigo: contaEncontrada.codigo, nome: contaEncontrada.nome });
+      // Usar setState para garantir atualização
+      setPartidas(prev => prev.map(p => 
+        p.id === id 
+          ? { ...p, contaCodigo: contaEncontrada.codigo, contaNome: contaEncontrada.nome }
+          : p
+      ));
+    } else {
+      // Se não encontrou, limpa os campos
+      console.log('❌ Conta não encontrada para:', entrada);
+      setPartidas(prev => prev.map(p => 
+        p.id === id 
+          ? { ...p, contaCodigo: '', contaNome: '' }
+          : p
+      ));
+    }
+  };
+
+  const handleSalvar = () => {
+    setErro('');
+
+    if (!data) {
+      setErro('Data é obrigatória');
+      return;
+    }
+
+    if (!historico.trim()) {
+      setErro('Histórico é obrigatório');
+      return;
+    }
+
+    if (partidas.length < 2) {
+      setErro('É necessário ao menos 2 partidas (débito e crédito)');
+      return;
+    }
+
+    const totalDebitos = partidas.filter(p => p.natureza === 'debito').length;
+    const totalCreditos = partidas.filter(p => p.natureza === 'credito').length;
+
+    if (modoPartidas === 'umUm' && (totalDebitos !== 1 || totalCreditos !== 1)) {
+      setErro('Modo 1:1 requer exatamente 1 débito e 1 crédito');
+      return;
+    }
+
+    if (modoPartidas === 'debitoParaCreditos') {
+      if (totalDebitos !== 1 || totalCreditos < 1) {
+        setErro('Modo 1 débito → vários créditos requer 1 débito e ao menos 1 crédito');
+        return;
+      }
+    }
+
+    if (modoPartidas === 'creditosParaDebito') {
+      if (totalCreditos !== 1 || totalDebitos < 1) {
+        setErro('Modo vários débitos → 1 crédito requer 1 crédito e ao menos 1 débito');
+        return;
+      }
+    }
+
+    // Validar cada partida
+    for (const partida of partidas) {
+      if (!partida.contaCodigo || !partida.contaNome) {
+        console.log('Partida inválida:', partida);
+        setErro(`Selecione uma conta válida para ${partida.natureza === 'debito' ? 'o débito' : 'o crédito'}`);
+        return;
+      }
+      const contaValida = contasAnaliticas.find(c => c.codigo === partida.contaCodigo);
+      if (!contaValida) {
+        setErro(`A conta "${partida.contaCodigo}" não é uma conta analítica válida`);
+        return;
+      }
+      if (partida.valor <= 0) {
+        setErro('Todas as partidas devem ter valor maior que zero');
+        return;
+      }
+    }
+
+    // Validar débitos = créditos
+    const { debitos, creditos } = calcularTotais();
+    if (Math.abs(debitos - creditos) > 0.01) {
+      setErro(`Lançamento não está balanceado. Débitos: R$ ${debitos.toFixed(2)} / Créditos: R$ ${creditos.toFixed(2)}`);
+      return;
+    }
+
+    const novoLancamento: Lancamento = {
+      id: lancamentoEmEdicao?.id || Date.now().toString(),
+      data,
+      documento,
+      historico,
+      partidas,
+      criadoEm: lancamentoEmEdicao?.criadoEm || new Date().toISOString(),
+      atualizadoEm: new Date().toISOString()
+    };
+
+    onSalvar(novoLancamento);
+  };
+
+  if (!isOpen) return null;
+
+  const totais = calcularTotais();
+  const isBalanceado = Math.abs(totais.diferenca) < 0.01;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full my-auto max-h-[75vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
+          <h3 className="text-xl font-semibold text-gray-800">
+            {lancamentoEmEdicao ? 'Editar Lançamento Contábil' : 'Novo Lançamento Contábil'}
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">Registro de partidas dobradas</p>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Informações básicas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Data *
+              </label>
+              <input
+                type="date"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Documento (opcional)
+              </label>
+              <input
+                type="text"
+                value={documento}
+                onChange={(e) => setDocumento(e.target.value)}
+                placeholder="Ex: 001, NF-123, etc"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Histórico *
+            </label>
+            <textarea
+              value={historico}
+              onChange={(e) => setHistorico(e.target.value)}
+              placeholder="Descrição do lançamento"
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
+            />
+          </div>
+
+          {/* Partidas */}
+          <div>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  Partidas *
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModoPartidas('umUm')}
+                    className={`px-3 py-1 text-xs rounded-full border ${modoPartidas === 'umUm' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-gray-300 text-gray-600'}`}
+                  >
+                    1 débito ↔ 1 crédito
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModoPartidas('debitoParaCreditos')}
+                    className={`px-3 py-1 text-xs rounded-full border ${modoPartidas === 'debitoParaCreditos' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-gray-300 text-gray-600'}`}
+                  >
+                    1 débito → vários créditos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModoPartidas('creditosParaDebito')}
+                    className={`px-3 py-1 text-xs rounded-full border ${modoPartidas === 'creditosParaDebito' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-gray-300 text-gray-600'}`}
+                  >
+                    vários débitos → 1 crédito
+                  </button>
+                </div>
+              </div>
+
+              {multiSide && (
+                <button
+                  type="button"
+                  onClick={() => adicionarPartida(multiSide)}
+                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Adicionar {multiSide === 'credito' ? 'crédito' : 'débito'}
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {!isUmUm ? (
+                <>
+              {partidas.map((partida, index) => (
+                <div key={partida.id} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
+                    <div className="md:col-span-2 space-y-1">
+                      <input
+                        type="text"
+                        value={partida.contaNome ? `${partida.contaCodigo} - ${partida.contaNome}` : (partida.contaCodigo || '')}
+                        onChange={(e) => selecionarConta(partida.id, e.target.value)}
+                        onBlur={(e) => selecionarConta(partida.id, e.target.value)}
+                        placeholder="Digite o código ou nome da conta"
+                        list="contas-analiticas"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
+                      />
+                      {partida.contaCodigo && !partida.contaNome && (
+                        <p className="text-xs text-red-500">Conta não encontrada. Selecione uma conta válida.</p>
+                      )}
+                      {!partida.contaCodigo && (
+                        <p className="text-xs text-gray-500">Somente contas analíticas ativas do plano de contas</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center">
+                      <span className={`px-3 py-2 text-xs font-semibold rounded-lg ${partida.natureza === 'debito' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                        {partida.natureza === 'debito' ? 'Débito' : 'Crédito'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <input
+                        type="number"
+                        value={partida.valor || ''}
+                        onChange={(e) => atualizarPartida(partida.id, 'valor', parseFloat(e.target.value) || 0)}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400 text-right"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removerPartida(partida.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+                </>
+              ) : (
+                <div className="bg-white p-4 rounded-lg border border-gray-300 space-y-3">
+                  {partidas.map((partida, idx) => (
+                    <div key={partida.id} className="pb-3 border-b last:border-b-0 last:pb-0">
+                      <p className="text-xs text-gray-600 font-medium mb-2">{partida.natureza === 'debito' ? 'Débito' : 'Crédito'}:</p>
+                      <input
+                        type="text"
+                        value={partida.contaNome ? `${partida.contaCodigo} - ${partida.contaNome}` : (partida.contaCodigo || '')}
+                        onChange={(e) => selecionarConta(partida.id, e.target.value)}
+                        placeholder="Digite o código ou nome da conta"
+                        list="contas-analiticas"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400"
+                      />
+                      {partida.contaCodigo && !partida.contaNome && (
+                        <p className="text-xs text-red-500 mt-1">Conta não encontrada. Selecione uma conta válida.</p>
+                      )}
+                    </div>
+                  ))}
+                  <div className="pt-3 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Valor *</label>
+                    <input
+                      type="number"
+                      value={valorUmUm || ''}
+                      onChange={(e) => atualizarValorUmUm(parseFloat(e.target.value) || 0)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400 text-right font-semibold text-lg"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Sugestões de contas (compartilhadas) */}
+              <datalist id="contas-analiticas">
+                {contasAnaliticas.map((conta) => (
+                  <option key={conta.codigo} value={`${conta.codigo} - ${conta.nome}`} />
+                ))}
+              </datalist>
+
+              {partidas.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  Clique em "Adicionar Partida" para começar
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Totais */}
+          {partidas.length > 0 && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center text-sm mb-2">
+                <span className="text-gray-600">Total Débitos:</span>
+                <span className="font-semibold text-gray-800">R$ {totais.debitos.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm mb-2">
+                <span className="text-gray-600">Total Créditos:</span>
+                <span className="font-semibold text-gray-800">R$ {totais.creditos.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-200">
+                <span className="text-gray-600">Diferença:</span>
+                <span className={`font-semibold ${isBalanceado ? 'text-green-600' : 'text-red-600'}`}>
+                  R$ {Math.abs(totais.diferenca).toFixed(2)}
+                  {isBalanceado && ' ✓'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Mensagem de erro */}
+          {erro && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {erro}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSalvar}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Salvar Lançamento
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Lancamentos() {
+  const [mounted, setMounted] = useState(false);
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [lancamentoEmEdicao, setLancamentoEmEdicao] = useState<Lancamento | null>(null);
+  const [lancamentoExpandido, setLancamentoExpandido] = useState<string | null>(null);
+  const [contasAnaliticas, setContasAnaliticas] = useState<{ codigo: string; nome: string; categoria: string }[]>([]);
+
+  // Função para extrair contas analíticas do plano de contas hierárquico
+  const extrairContasAnaliticas = (contas: ContaBancaria[]): { codigo: string; nome: string; categoria: string }[] => {
+    const resultado: { codigo: string; nome: string; categoria: string }[] = [];
+    
+    const percorrer = (conta: ContaBancaria) => {
+      // Conta analítica é aquela que não tem subcontas ou tem array vazio
+      if (!conta.subcontas || conta.subcontas.length === 0) {
+        if (conta.ativa) {
+          resultado.push({
+            codigo: conta.codigo,
+            nome: conta.nome,
+            categoria: conta.categoria?.toLowerCase() || 'outro'
+          });
+        }
+      } else {
+        // Continua percorrendo subcontas
+        conta.subcontas.forEach(subconta => percorrer(subconta));
+      }
+    };
+    
+    contas.forEach(conta => percorrer(conta));
+    return resultado;
+  };
+
+  // Carregar contas analíticas do plano de contas
+  useEffect(() => {
+    const carregarContas = async () => {
+      try {
+        const todasContas = await getContas();
+        const analiticas = extrairContasAnaliticas(todasContas);
+        setContasAnaliticas(analiticas);
+      } catch (error) {
+        console.error('Erro ao carregar contas:', error);
+      }
+    };
+
+    carregarContas();
+  }, []);
+
+  useEffect(() => {
+    const carregarLancamentos = async () => {
+      try {
+        const lancamentosAPI = await getLancamentos();
+        setLancamentos(lancamentosAPI);
+        setMounted(true);
+      } catch (error) {
+        console.error('Erro ao carregar lançamentos:', error);
+        setMounted(true);
+      }
+    };
+    carregarLancamentos();
+  }, []);
+
+  const handleExcluirLancamento = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este lançamento?')) return;
+
+    try {
+      await deleteLancamento(id);
+      setLancamentos(lancamentos.filter(l => l.id !== id));
+    } catch (error) {
+      console.error('Erro ao excluir lançamento:', error);
+      alert('Erro ao excluir lançamento. Tente novamente.');
+    }
+  };
+
+  const handleEditarLancamento = (id: string) => {
+    const lancamento = lancamentos.find(l => l.id === id);
+    if (lancamento) {
+      setLancamentoEmEdicao(lancamento);
+      setModalAberto(true);
+    }
+  };
+
+  if (!mounted) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+      {/* Header */}
+      {/* Header */}
+      <Header />
+
+      {/* Navigation Desktop */}
+      <nav className="hidden md:block bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex space-x-1">
+            <a href="/" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Dashboard</a>
+            <a href="/plano-de-contas" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Plano de Contas</a>
+            <a href="/planejamento" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Planejamento</a>
+            <a href="/lancamentos" className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Lançamentos</a>
+            <a href="/configuracoes" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Configurações</a>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow">
+          {/* Header da lista */}
+          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Lançamentos Contábeis
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Registro de partidas dobradas
+              </p>
+            </div>
+            <button
+              onClick={() => setModalAberto(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              + Novo Lançamento
+            </button>
+          </div>
+
+          {/* Lista de lançamentos */}
+          <div className="p-6">
+            {lancamentos.length === 0 ? (
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-gray-500 text-lg mb-2">Nenhum lançamento cadastrado</p>
+                <p className="text-gray-400 text-sm">Clique em "Novo Lançamento" para começar</p>
+              </div>
+            ) : (
+              <>
+                {/* Tabela para telas médias e grandes */}
+                <div className="hidden md:block overflow-x-auto -mx-6 px-6">
+                <table className="w-full table-fixed min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-2 text-xs md:text-sm font-semibold text-gray-700 w-20">Data</th>
+                      <th className="hidden lg:table-cell text-left py-2 px-2 text-sm font-semibold text-gray-700 w-20">Documento</th>
+                      <th className="text-left py-2 px-2 text-xs md:text-sm font-semibold text-gray-700 w-32 lg:w-40">Histórico</th>
+                      <th className="text-left py-2 px-2 text-xs md:text-sm font-semibold text-gray-700 w-32 lg:w-40">Débito</th>
+                      <th className="text-left py-2 px-2 text-xs md:text-sm font-semibold text-gray-700 w-32 lg:w-40">Crédito</th>
+                      <th className="text-right py-2 px-2 text-xs md:text-sm font-semibold text-gray-700 w-20">Valor</th>
+                      <th className="text-center py-2 px-1 text-xs md:text-sm font-semibold text-gray-700 w-14">
+                        <span className="sr-only">Ações</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lancamentos.map((lancamento) => {
+                      const partidaDebito = lancamento.partidas.find(p => p.natureza === 'debito');
+                      const partidaCredito = lancamento.partidas.find(p => p.natureza === 'credito');
+                      const valor = partidaDebito?.valor || partidaCredito?.valor || 0;
+
+                      return (
+                        <tr key={lancamento.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-2 px-2 text-xs md:text-sm text-gray-700 whitespace-nowrap align-top">
+                            {new Date(lancamento.data).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="hidden lg:table-cell py-2 px-2 text-sm text-gray-700 align-top">
+                            {lancamento.documento || '-'}
+                          </td>
+                          <td className="py-2 px-2 text-xs md:text-sm text-gray-700 align-top">
+                            <div className="line-clamp-2 break-words" title={lancamento.historico}>
+                              {lancamento.historico}
+                            </div>
+                          </td>
+                          <td className="py-2 px-2 text-gray-700 align-top">
+                            {partidaDebito ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-green-100 text-green-700 font-semibold text-[10px] flex-shrink-0">D</span>
+                                  <span className="font-mono text-[10px] md:text-xs text-gray-600">{partidaDebito.contaCodigo}</span>
+                                </div>
+                                <div className="text-xs md:text-sm line-clamp-2 break-words leading-none" title={partidaDebito.contaNome}>{partidaDebito.contaNome}</div>
+                              </>
+                            ) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-gray-700 align-top">
+                            {partidaCredito ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-red-100 text-red-700 font-semibold text-[10px] flex-shrink-0">C</span>
+                                  <span className="font-mono text-[10px] md:text-xs text-gray-600">{partidaCredito.contaCodigo}</span>
+                                </div>
+                                <div className="text-xs md:text-sm line-clamp-2 break-words leading-none" title={partidaCredito.contaNome}>{partidaCredito.contaNome}</div>
+                              </>
+                            ) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-xs md:text-sm text-right text-gray-700 font-medium whitespace-nowrap align-top">
+                            R$ {valor.toFixed(2)}
+                          </td>
+                          <td className="py-2 px-1 text-center align-top">
+                            <div className="flex items-center justify-center gap-0.5">
+                            <button 
+                              onClick={() => handleEditarLancamento(lancamento.id)}
+                              className="inline-flex items-center justify-center w-7 h-7 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                              title="Editar lançamento"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span className="sr-only">Editar</span>
+                            </button>
+                            <button 
+                              onClick={() => handleExcluirLancamento(lancamento.id)}
+                              className="inline-flex items-center justify-center w-7 h-7 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                              title="Excluir lançamento"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              <span className="sr-only">Excluir</span>
+                            </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cards Mobile */}
+              <div className="md:hidden space-y-4">
+                {lancamentos.reduce<React.ReactNode[]>((acc, lancamento, index, array) => {
+                  const dataFormatada = new Date(lancamento.data).toLocaleDateString('pt-BR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  });
+                  
+                  const dataDiferente = index === 0 || 
+                    new Date(array[index - 1].data).toDateString() !== new Date(lancamento.data).toDateString();
+
+                  const partidaDebito = lancamento.partidas.find(p => p.natureza === 'debito');
+                  const partidaCredito = lancamento.partidas.find(p => p.natureza === 'credito');
+                  const valor = partidaDebito?.valor || partidaCredito?.valor || 0;
+
+                  acc.push(
+                    <React.Fragment key={`${lancamento.id}-fragment`}>
+                      {dataDiferente && (
+                        <div className="px-3 pt-2 pb-1">
+                          <h3 className="text-sm font-semibold text-gray-700">{dataFormatada}</h3>
+                        </div>
+                      )}
+                      
+                      <div
+                        className="relative mx-2 bg-white rounded-lg shadow-sm overflow-hidden"
+                        style={{ touchAction: 'pan-y' }}
+                      >
+                        <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-6">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </div>
+
+                        <div
+                          onClick={() => handleEditarLancamento(lancamento.id)}
+                          onTouchStart={(e) => {
+                            const touch = e.touches[0];
+                            const target = e.currentTarget as HTMLElement;
+                            (target as any).touchStartX = touch.clientX;
+                            (target as any).touchStartTime = Date.now();
+                          }}
+                          onTouchMove={(e) => {
+                            const touch = e.touches[0];
+                            const target = e.currentTarget as HTMLElement;
+                            const startX = (target as any).touchStartX;
+                            if (startX) {
+                              const deltaX = touch.clientX - startX;
+                              if (deltaX < 0) {
+                                target.style.transform = `translateX(${Math.max(deltaX, -100)}px)`;
+                                target.style.transition = 'none';
+                              }
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            const target = e.currentTarget as HTMLElement;
+                            const startX = (target as any).touchStartX;
+                            const startTime = (target as any).touchStartTime;
+                            const currentX = e.changedTouches[0].clientX;
+                            const deltaX = currentX - startX;
+                            const deltaTime = Date.now() - startTime;
+
+                            if (deltaX < -80 || (deltaX < -40 && deltaTime < 300)) {
+                              handleExcluirLancamento(lancamento.id);
+                            }
+                            
+                            target.style.transform = 'translateX(0)';
+                            target.style.transition = 'transform 0.3s ease';
+                            setTimeout(() => {
+                              target.style.transition = '';
+                            }, 300);
+                          }}
+                          className="relative bg-white p-3 cursor-pointer active:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 text-sm leading-5 line-clamp-2">
+                                {lancamento.historico}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end flex-shrink-0">
+                              <p className="text-base font-semibold text-red-600 whitespace-nowrap">
+                                -R$ {valor.toFixed(2).replace('.', ',')}
+                              </p>
+                              {lancamento.documento && (
+                                <span className="text-xs text-gray-500 mt-1">
+                                  {lancamento.documento}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-green-100 text-green-700 font-semibold text-xs flex-shrink-0">
+                                D
+                              </span>
+                              <span className="text-gray-600 truncate">
+                                {partidaDebito?.contaNome || '-'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-red-100 text-red-700 font-semibold text-xs flex-shrink-0">
+                                C
+                              </span>
+                              <span className="text-gray-600 truncate">
+                                {partidaCredito?.contaNome || '-'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                  return acc;
+                }, [])}
+              </div>
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Modal de Lançamento */}
+      {modalAberto && (
+        <ModalLancamento
+          isOpen={modalAberto}
+          onClose={() => {
+            setModalAberto(false);
+            setLancamentoEmEdicao(null);
+          }}
+          onSalvar={async (novoLancamento) => {
+            try {
+              if (lancamentoEmEdicao) {
+                // Editar lançamento existente
+                const { updateLancamento } = await import('@/lib/api');
+                const lancamentoAtualizado = await updateLancamento(lancamentoEmEdicao.id, novoLancamento);
+                setLancamentos(lancamentos.map(l => l.id === lancamentoEmEdicao.id ? lancamentoAtualizado : l));
+              } else {
+                // Criar novo lançamento
+                const lancamentoSalvo = await createLancamento(novoLancamento);
+                setLancamentos([...lancamentos, lancamentoSalvo]);
+              }
+              setModalAberto(false);
+              setLancamentoEmEdicao(null);
+            } catch (error) {
+              console.error('Erro ao salvar lançamento:', error);
+              alert('Erro ao salvar lançamento. Tente novamente.');
+            }
+          }}
+          contasAnaliticas={contasAnaliticas}
+          lancamentoEmEdicao={lancamentoEmEdicao}
+        />
+      )}
+
+      {/* Navigation Mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]">
+        <div className="flex justify-around items-center h-16">
+          <a href="/" className="flex flex-col items-center justify-center flex-1 h-full text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span className="text-xs mt-1">Home</span>
+          </a>
+          <a href="/plano-de-contas" className="flex flex-col items-center justify-center flex-1 h-full text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            <span className="text-xs mt-1">Contas</span>
+          </a>
+          <a href="/planejamento" className="flex flex-col items-center justify-center flex-1 h-full text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            <span className="text-xs mt-1">Planejar</span>
+          </a>
+          <a href="/lancamentos" className="flex flex-col items-center justify-center flex-1 h-full text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <span className="text-xs mt-1">Lançar</span>
+          </a>
+          <a href="/configuracoes" className="flex flex-col items-center justify-center flex-1 h-full text-gray-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            <span className="text-xs mt-1">Config</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  );
+}

@@ -1,0 +1,1050 @@
+{
+  "contas": [
+    {
+      "id": "1",
+      "codigo": "1",
+      "nome": "ATIVO",
+      "tipoCC": "sintetica",
+      "categoria": "ativo",
+      "ativa": true,
+      "subcontas": [
+        {
+          "id": "1-1",
+          "codigo": "1.1",
+          "nome": "Ativo Circulante",
+          "tipoCC": "sintetica",
+          "categoria": "ativo",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "1-1-01",
+              "codigo": "1.1.01",
+              "nome": "Disponibilidades",
+              "tipoCC": "sintetica",
+              "categoria": "ativo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "1-1-01-001",
+                  "codigo": "1.1.01.001",
+                  "nome": "Caixa",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-01-002",
+                  "codigo": "1.1.01.002",
+                  "nome": "Banco Itaú - Conta Corrente",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-01-003",
+                  "codigo": "1.1.01.003",
+                  "nome": "Banco Bradesco - Conta Corrente",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-01-004",
+                  "codigo": "1.1.01.004",
+                  "nome": "Nubank - Conta Digital",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-01-005",
+                  "codigo": "1.1.01.005",
+                  "nome": "Poupança Itaú",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-01-006",
+                  "codigo": "1.1.01.006",
+                  "nome": "Poupança Bradesco",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "1-1-02",
+              "codigo": "1.1.02",
+              "nome": "Investimentos",
+              "tipoCC": "sintetica",
+              "categoria": "ativo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "1-1-02-001",
+                  "codigo": "1.1.02.001",
+                  "nome": "Tesouro Direto",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-02-002",
+                  "codigo": "1.1.02.002",
+                  "nome": "CDB",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-02-003",
+                  "codigo": "1.1.02.003",
+                  "nome": "Fundos de Investimento",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-02-004",
+                  "codigo": "1.1.02.004",
+                  "nome": "Ações",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "1-1-03",
+              "codigo": "1.1.03",
+              "nome": "Empréstimos a Receber",
+              "tipoCC": "sintetica",
+              "categoria": "ativo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "1-1-03-001",
+                  "codigo": "1.1.03.001",
+                  "nome": "Empréstimos a Familiares",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-1-03-002",
+                  "codigo": "1.1.03.002",
+                  "nome": "Empréstimos a Terceiros",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1-2",
+          "codigo": "1.2",
+          "nome": "Ativo Não Circulante",
+          "tipoCC": "sintetica",
+          "categoria": "ativo",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "1-2-01",
+              "codigo": "1.2.01",
+              "nome": "Imobilizado",
+              "tipoCC": "sintetica",
+              "categoria": "ativo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "1-2-01-001",
+                  "codigo": "1.2.01.001",
+                  "nome": "Veículos",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                },
+                {
+                  "id": "1-2-01-002",
+                  "codigo": "1.2.01.002",
+                  "nome": "Gado",
+                  "tipoCC": "analitica",
+                  "categoria": "ativo",
+                  "ativa": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "codigo": "2",
+      "nome": "PASSIVO",
+      "tipoCC": "sintetica",
+      "categoria": "passivo",
+      "ativa": true,
+      "subcontas": [
+        {
+          "id": "2-1",
+          "codigo": "2.1",
+          "nome": "Passivo Circulante",
+          "tipoCC": "sintetica",
+          "categoria": "passivo",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "2-1-01",
+              "codigo": "2.1.01",
+              "nome": "Cartões de Crédito",
+              "tipoCC": "sintetica",
+              "categoria": "passivo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "2-1-01-001",
+                  "codigo": "2.1.01.001",
+                  "nome": "Cartão Itaú Mastercard",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                },
+                {
+                  "id": "2-1-01-002",
+                  "codigo": "2.1.01.002",
+                  "nome": "Cartão Nubank",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                },
+                {
+                  "id": "2-1-01-003",
+                  "codigo": "2.1.01.003",
+                  "nome": "Cartão Bradesco Visa",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "2-1-02",
+              "codigo": "2.1.02",
+              "nome": "Empréstimos a Pagar",
+              "tipoCC": "sintetica",
+              "categoria": "passivo",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "2-1-02-001",
+                  "codigo": "2.1.02.001",
+                  "nome": "Empréstimo Bancário",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                },
+                {
+                  "id": "2-1-02-002",
+                  "codigo": "2.1.02.002",
+                  "nome": "Financiamento de Veículo",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                },
+                {
+                  "id": "2-1-02-003",
+                  "codigo": "2.1.02.003",
+                  "nome": "Empréstimo Pessoal",
+                  "tipoCC": "analitica",
+                  "categoria": "passivo",
+                  "ativa": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "codigo": "3",
+      "nome": "RECEITAS",
+      "tipoCC": "sintetica",
+      "categoria": "receita",
+      "ativa": true,
+      "subcontas": [
+        {
+          "id": "3-1",
+          "codigo": "3.1",
+          "nome": "Receitas do Trabalho",
+          "tipoCC": "sintetica",
+          "categoria": "receita",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "3-1-01",
+              "codigo": "3.1.01",
+              "nome": "Salário CLT",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-1-02",
+              "codigo": "3.1.02",
+              "nome": "13º Salário",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-1-03",
+              "codigo": "3.1.03",
+              "nome": "Férias",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-1-04",
+              "codigo": "3.1.04",
+              "nome": "Horas Extras",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            }
+          ]
+        },
+        {
+          "id": "3-2",
+          "codigo": "3.2",
+          "nome": "Receitas de Serviços",
+          "tipoCC": "sintetica",
+          "categoria": "receita",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "3-2-01",
+              "codigo": "3.2.01",
+              "nome": "Serviços Contábeis",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-2-02",
+              "codigo": "3.2.02",
+              "nome": "Uber",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            }
+          ]
+        },
+        {
+          "id": "3-3",
+          "codigo": "3.3",
+          "nome": "Receitas Agropecuárias",
+          "tipoCC": "sintetica",
+          "categoria": "receita",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "3-3-01",
+              "codigo": "3.3.01",
+              "nome": "Venda de Gado",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            }
+          ]
+        },
+        {
+          "id": "3-4",
+          "codigo": "3.4",
+          "nome": "Receitas Financeiras",
+          "tipoCC": "sintetica",
+          "categoria": "receita",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "3-4-01",
+              "codigo": "3.4.01",
+              "nome": "Rendimentos de Poupança",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-4-02",
+              "codigo": "3.4.02",
+              "nome": "Rendimentos de Investimentos",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            },
+            {
+              "id": "3-4-03",
+              "codigo": "3.4.03",
+              "nome": "Juros Recebidos",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            }
+          ]
+        },
+        {
+          "id": "3-5",
+          "codigo": "3.5",
+          "nome": "Outras Receitas",
+          "tipoCC": "sintetica",
+          "categoria": "receita",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "3-5-01",
+              "codigo": "3.5.01",
+              "nome": "Receitas Eventuais",
+              "tipoCC": "analitica",
+              "categoria": "receita",
+              "ativa": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "codigo": "4",
+      "nome": "DESPESAS",
+      "tipoCC": "sintetica",
+      "categoria": "despesa",
+      "ativa": true,
+      "subcontas": [
+        {
+          "id": "4-1",
+          "codigo": "4.1",
+          "nome": "Despesas Fixas",
+          "tipoCC": "sintetica",
+          "categoria": "despesa",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "4-1-01",
+              "codigo": "4.1.01",
+              "nome": "Moradia",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-1-01-001",
+                  "codigo": "4.1.01.001",
+                  "nome": "Aluguel",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-002",
+                  "codigo": "4.1.01.002",
+                  "nome": "Condomínio",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-003",
+                  "codigo": "4.1.01.003",
+                  "nome": "IPTU",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-004",
+                  "codigo": "4.1.01.004",
+                  "nome": "Energia Elétrica",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-005",
+                  "codigo": "4.1.01.005",
+                  "nome": "Água",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-006",
+                  "codigo": "4.1.01.006",
+                  "nome": "Gás",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-007",
+                  "codigo": "4.1.01.007",
+                  "nome": "Internet",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-01-008",
+                  "codigo": "4.1.01.008",
+                  "nome": "TV por Assinatura",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-1-02",
+              "codigo": "4.1.02",
+              "nome": "Transporte",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-1-02-001",
+                  "codigo": "4.1.02.001",
+                  "nome": "Prestação do Veículo",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-02-002",
+                  "codigo": "4.1.02.002",
+                  "nome": "IPVA",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-02-003",
+                  "codigo": "4.1.02.003",
+                  "nome": "Licenciamento",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-02-004",
+                  "codigo": "4.1.02.004",
+                  "nome": "Seguro do Veículo",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-1-03",
+              "codigo": "4.1.03",
+              "nome": "Seguros e Planos",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-1-03-001",
+                  "codigo": "4.1.03.001",
+                  "nome": "Plano de Saúde",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-03-002",
+                  "codigo": "4.1.03.002",
+                  "nome": "Seguro de Vida",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-1-04",
+              "codigo": "4.1.04",
+              "nome": "Comunicação",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-1-04-001",
+                  "codigo": "4.1.04.001",
+                  "nome": "Celular",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-1-05",
+              "codigo": "4.1.05",
+              "nome": "Assinaturas e Serviços",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-1-05-001",
+                  "codigo": "4.1.05.001",
+                  "nome": "Netflix",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-05-002",
+                  "codigo": "4.1.05.002",
+                  "nome": "Spotify",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-05-003",
+                  "codigo": "4.1.05.003",
+                  "nome": "Academia",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-1-05-004",
+                  "codigo": "4.1.05.004",
+                  "nome": "Outras Assinaturas",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4-2",
+          "codigo": "4.2",
+          "nome": "Despesas Variáveis",
+          "tipoCC": "sintetica",
+          "categoria": "despesa",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "4-2-01",
+              "codigo": "4.2.01",
+              "nome": "Alimentação",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-01-001",
+                  "codigo": "4.2.01.001",
+                  "nome": "Supermercado",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-01-002",
+                  "codigo": "4.2.01.002",
+                  "nome": "Restaurantes e Delivery",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-01-003",
+                  "codigo": "4.2.01.003",
+                  "nome": "Padaria",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-01-004",
+                  "codigo": "4.2.01.004",
+                  "nome": "Lanches e Cafés",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-02",
+              "codigo": "4.2.02",
+              "nome": "Transporte Variável",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-02-001",
+                  "codigo": "4.2.02.001",
+                  "nome": "Combustível",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-02-002",
+                  "codigo": "4.2.02.002",
+                  "nome": "Estacionamento",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-02-003",
+                  "codigo": "4.2.02.003",
+                  "nome": "Uber/Taxi",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-02-004",
+                  "codigo": "4.2.02.004",
+                  "nome": "Pedágio",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-02-005",
+                  "codigo": "4.2.02.005",
+                  "nome": "Manutenção do Veículo",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-02-006",
+                  "codigo": "4.2.02.006",
+                  "nome": "Lavagem do Veículo",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-03",
+              "codigo": "4.2.03",
+              "nome": "Saúde",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-03-001",
+                  "codigo": "4.2.03.001",
+                  "nome": "Farmácia e Medicamentos",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-03-002",
+                  "codigo": "4.2.03.002",
+                  "nome": "Consultas Médicas",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-03-003",
+                  "codigo": "4.2.03.003",
+                  "nome": "Exames",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-03-004",
+                  "codigo": "4.2.03.004",
+                  "nome": "Dentista",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-04",
+              "codigo": "4.2.04",
+              "nome": "Lazer e Entretenimento",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-04-001",
+                  "codigo": "4.2.04.001",
+                  "nome": "Cinema e Teatro",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-04-002",
+                  "codigo": "4.2.04.002",
+                  "nome": "Bares e Baladas",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-04-003",
+                  "codigo": "4.2.04.003",
+                  "nome": "Viagens",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-04-004",
+                  "codigo": "4.2.04.004",
+                  "nome": "Hobbies",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-04-005",
+                  "codigo": "4.2.04.005",
+                  "nome": "Jogos e Apostas",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-05",
+              "codigo": "4.2.05",
+              "nome": "Vestuário e Cuidados Pessoais",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-05-001",
+                  "codigo": "4.2.05.001",
+                  "nome": "Roupas",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-05-002",
+                  "codigo": "4.2.05.002",
+                  "nome": "Calçados",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-05-003",
+                  "codigo": "4.2.05.003",
+                  "nome": "Barbeiro/Cabeleireiro",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-05-004",
+                  "codigo": "4.2.05.004",
+                  "nome": "Produtos de Higiene",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-06",
+              "codigo": "4.2.06",
+              "nome": "Casa",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-06-001",
+                  "codigo": "4.2.06.001",
+                  "nome": "Móveis e Decoração",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-06-002",
+                  "codigo": "4.2.06.002",
+                  "nome": "Utensílios Domésticos",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-06-003",
+                  "codigo": "4.2.06.003",
+                  "nome": "Manutenção e Reparos",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-06-004",
+                  "codigo": "4.2.06.004",
+                  "nome": "Produtos de Limpeza",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-07",
+              "codigo": "4.2.07",
+              "nome": "Educação",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-07-001",
+                  "codigo": "4.2.07.001",
+                  "nome": "Cursos",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-07-002",
+                  "codigo": "4.2.07.002",
+                  "nome": "Livros",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            },
+            {
+              "id": "4-2-08",
+              "codigo": "4.2.08",
+              "nome": "Tecnologia",
+              "tipoCC": "sintetica",
+              "categoria": "despesa",
+              "ativa": true,
+              "subcontas": [
+                {
+                  "id": "4-2-08-001",
+                  "codigo": "4.2.08.001",
+                  "nome": "Eletrônicos",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                },
+                {
+                  "id": "4-2-08-002",
+                  "codigo": "4.2.08.002",
+                  "nome": "Informática",
+                  "tipoCC": "analitica",
+                  "categoria": "despesa",
+                  "ativa": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4-3",
+          "codigo": "4.3",
+          "nome": "Despesas Financeiras",
+          "tipoCC": "sintetica",
+          "categoria": "despesa",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "4-3-01",
+              "codigo": "4.3.01",
+              "nome": "Juros e Multas",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            },
+            {
+              "id": "4-3-02",
+              "codigo": "4.3.02",
+              "nome": "Tarifas Bancárias",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            },
+            {
+              "id": "4-3-03",
+              "codigo": "4.3.03",
+              "nome": "IOF",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            }
+          ]
+        },
+        {
+          "id": "4-4",
+          "codigo": "4.4",
+          "nome": "Outras Despesas",
+          "tipoCC": "sintetica",
+          "categoria": "despesa",
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "4-4-01",
+              "codigo": "4.4.01",
+              "nome": "Presentes",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            },
+            {
+              "id": "4-4-02",
+              "codigo": "4.4.02",
+              "nome": "Doações",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            },
+            {
+              "id": "4-4-03",
+              "codigo": "4.4.03",
+              "nome": "Despesas Eventuais",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+[
+  {
+    "id": "1765137764867",
+    "data": "2025-12-07",
+    "documento": "REC001",
+    "historico": "Depósito - Salário dezembro",
+    "partidas": [
+      {
+        "id": "1765137755729-d",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "debito",
+        "valor": 5125
+      },
+      {
+        "id": "1765137755729-c",
+        "contaCodigo": "4.1.01.001",
+        "contaNome": "Salário",
+        "natureza": "credito",
+        "valor": 5125
+      }
+    ],
+    "criadoEm": "2025-12-07T20:02:44.867Z",
+    "atualizadoEm": "2025-12-08T01:35:18.439Z"
+  },
+  {
+    "id": "1765138000000",
+    "data": "2025-12-06",
+    "documento": "COMP001",
+    "historico": "Pagamento - Aluguel dezembro",
+    "partidas": [
+      {
+        "id": "1765138000001-d",
+        "contaCodigo": "5.1.01.001",
+        "contaNome": "Aluguel",
+        "natureza": "debito",
+        "valor": 1500
+      },
+      {
+        "id": "1765138000001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 1500
+      }
+    ],
+    "criadoEm": "2025-12-06T10:30:00.000Z"
+  },
+  {
+    "id": "1765138100000",
+    "data": "2025-12-05",
+    "documento": "COMP002",
+    "historico": "Pagamento - Energia elétrica",
+    "partidas": [
+      {
+        "id": "1765138100001-d",
+        "contaCodigo": "5.2.01.001",
+        "contaNome": "Energia e Água",
+        "natureza": "debito",
+        "valor": 250
+      },
+      {
+        "id": "1765138100001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 250
+      }
+    ],
+    "criadoEm": "2025-12-05T14:15:00.000Z"
+  },
+  {
+    "id": "1765138200000",
+    "data": "2025-12-04",
+    "documento": "COMP003",
+    "historico": "Supermercado - Compras do mês",
+    "partidas": [
+      {
+        "id": "1765138200001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 800
+      },
+      {
+        "id": "1765138200001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 800
+      }
+    ],
+    "criadoEm": "2025-12-04T18:45:00.000Z"
+  },
+  {
+    "id": "1765138300000",
+    "data": "2025-12-03",
+    "documento": "COMP004",
+    "historico": "Assinatura - Netflix mensal",
+    "partidas": [
+      {
+        "id": "1765138300001-d",
+        "contaCodigo": "5.4.01.001",
+        "contaNome": "Assinaturas e Serviços",
+        "natureza": "debito",
+        "valor": 45
+      },
+      {
+        "id": "1765138300001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 45
+      }
+    ],
+    "criadoEm": "2025-12-03T09:00:00.000Z"
+  },
+  {
+    "id": "1765138400000",
+    "data": "2025-12-03",
+    "documento": "DEP001",
+    "historico": "Transferência - Aplicação financeira",
+    "partidas": [
+      {
+        "id": "1765138400001-d",
+        "contaCodigo": "1.2.01.001",
+        "contaNome": "Investimentos",
+        "natureza": "debito",
+        "valor": 1000
+      },
+      {
+        "id": "1765138400001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 1000
+      }
+    ],
+    "criadoEm": "2025-12-02T11:30:00.000Z",
+    "atualizadoEm": "2025-12-08T03:47:09.000Z"
+  }
+]
