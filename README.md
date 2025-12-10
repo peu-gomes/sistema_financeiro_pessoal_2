@@ -1,5 +1,7 @@
 # Sistema Financeiro Pessoal
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/addf9733-bc96-4fd7-b6d0-728620e84852/deploy-status)](https://app.netlify.com/projects/silly-raindrop-7f5a14/deploys)
+
 Sistema de gestão financeira pessoal com contabilidade por partidas dobradas.
 
 ## 🚀 Início Rápido

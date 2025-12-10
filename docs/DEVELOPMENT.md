@@ -54,6 +54,16 @@ All state changes are persisted to JSON files via Next.js API routes. The system
 
 The user interface emphasizes clarity and efficiency. Forms use inline validation to provide immediate feedback. Modal dialogs handle complex operations while keeping the main view uncluttered. The design is responsive, adapting seamlessly between desktop and mobile viewports. Color usage is intentional, with neutral tones for structure and blue accents for primary actions.
 
+### Mobile Navigation Spacing
+
+On mobile devices, the bottom navigation bar (`<nav>`) occupies space with height of 64px (`h-16`) plus padding for safe areas (notch/system bars). To prevent content from being hidden behind this navigation, modals and sticky footers implement `safe-area-bottom` spacing. This CSS class respects the viewport's safe-area-inset-bottom, ensuring content remains accessible even on devices with notches or system navigation bars.
+
+**Implementation:**
+- Sticky footer elements use `safe-area-bottom` class
+- Container height calculations account for this spacing: `calc(100vh - 240px)` on mobile, `calc(70vh)` on desktop
+- This ensures modal buttons and content are always visible above the navigation bar
+- Applied to: Modal footers, sticky footers, and any bottom-aligned UI elements
+
 ## Development Approach
 
 Features are implemented incrementally with thorough testing. Configuration toggles control advanced functionality, allowing gradual feature adoption. Validation occurs at multiple levels to ensure data integrity. Error messages are clear and actionable. The codebase maintains consistent patterns that make it easier to understand and extend.

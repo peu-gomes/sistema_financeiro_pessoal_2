@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getContas, type ContaBancaria } from '@/lib/api';
+import { useEffect, useRef, useState } from 'react';
+import type { TouchEvent } from 'react';
 import Header from '@/components/Header';
+import { getContas, type ContaBancaria } from '@/lib/api';
 import { 
   getOrcamentos,
   getOrcamentoFixo,
@@ -27,16 +28,54 @@ export default function Planejamento() {
   const [visualizacao, setVisualizacao] = useState<'mensal' | 'anual'>('mensal');
   const [modalAberto, setModalAberto] = useState(false);
   const [itemEmEdicao, setItemEmEdicao] = useState<ItemOrcamento | null>(null);
+  const [modoCompacto, setModoCompacto] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullStartY, setPullStartY] = useState<number | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const autoSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveFirstRun = useRef(true);
 
   const orcamentoAtual = tipoAtivo === 'fixo' ? orcamentoFixo : orcamentoMensal;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     carregarDados();
+    
+    // Listener de scroll para modo compacto
+    const handleScroll = () => {
+      setModoCompacto(window.scrollY > 200);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     carregarOrcamentoMensal(mesAtual, anoAtual);
   }, [mesAtual, anoAtual]);
+
+  // Auto-save debounce para orçamentos
+  useEffect(() => {
+    if (autoSaveFirstRun.current) {
+      autoSaveFirstRun.current = false;
+      return;
+    }
+
+    if (autoSaveTimeout.current) clearTimeout(autoSaveTimeout.current);
+
+    autoSaveTimeout.current = setTimeout(() => {
+      if (orcamentoFixo) saveOrcamento(orcamentoFixo);
+      if (orcamentoMensal) saveOrcamento(orcamentoMensal);
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeout.current) clearTimeout(autoSaveTimeout.current);
+    };
+  }, [orcamentoFixo, orcamentoMensal]);
 
   const carregarDados = async () => {
     const contasData = await getContas();
@@ -141,6 +180,37 @@ export default function Planejamento() {
     setItemEmEdicao(null);
   };
 
+  const refreshDados = async () => {
+    setIsRefreshing(true);
+    await carregarDados();
+    setIsRefreshing(false);
+    setPullDistance(0);
+    setPullStartY(null);
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    if (window.scrollY === 0) {
+      setPullStartY(e.touches[0].clientY);
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (pullStartY === null) return;
+    const distance = e.touches[0].clientY - pullStartY;
+    if (distance > 0) {
+      setPullDistance(Math.min(distance, 140));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 70) {
+      refreshDados();
+    }
+    setPullStartY(null);
+    setPullDistance(0);
+  };
+
   const handleExcluirItem = (id: string) => {
     if (!orcamentoAtual || !confirm('Deseja excluir este item do orçamento?')) return;
     
@@ -193,76 +263,89 @@ export default function Planejamento() {
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return meses[mes - 1] || 'Mês';
   };
-
   const totais = calcularTotais();
+
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
-      {/* Header */}
-      {/* Header */}
       <Header />
 
-      {/* Navigation Desktop */}
-      <nav className="hidden md:block bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex space-x-1">
-            <a href="/" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Dashboard</a>
-            <a href="/plano-de-contas" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Plano de Contas</a>
-            <a href="/planejamento" className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Planejamento</a>
-            <a href="/lancamentos" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Lançamentos</a>
-            <a href="/configuracoes" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Configurações</a>
-          </div>
+      {/* Indicador de pull-to-refresh (mobile) */}
+      {(isRefreshing || pullDistance > 0) && (
+        <div className="md:hidden flex items-center justify-center text-[12px] text-gray-600 py-2 transition-all" style={{ transform: `translateY(${pullDistance ? Math.min(pullDistance, 80) / 4 : 0}px)` }}>
+          {isRefreshing ? 'Atualizando...' : pullDistance > 70 ? 'Solte para atualizar' : 'Puxe para atualizar'}
         </div>
-      </nav>
+      )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Abas Fixo / Mensal */}
-        <div className="bg-white rounded-lg shadow mb-6">
+      <main
+        className="max-w-7xl mx-auto px-4 py-8"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ transform: pullDistance ? `translateY(${Math.min(pullDistance, 80) / 6}px)` : undefined }}
+      >
+        {/* Abas Fixo / Mensal - STICKY com modo compacto */}
+        <div className={`bg-white rounded-lg shadow mb-6 sticky top-12 z-30 transition-all duration-300 ${
+          modoCompacto ? 'shadow-md' : ''
+        }`}>
           <div className="border-b border-gray-200">
             <div className="flex">
               <button
                 onClick={() => setTipoAtivo('mensal')}
-                className={`flex-1 md:flex-none md:px-8 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 md:flex-none md:px-8 text-sm font-medium border-b-2 transition-all ${
+                  modoCompacto ? 'py-2' : 'py-4'
+                } ${
                   tipoAtivo === 'mensal'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-blue-700 dark:border-blue-500 text-blue-700 bg-white dark:bg-blue-900/30 dark:text-blue-400'
                     : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
                 }`}
               >
-                📅 Mensal
+                {modoCompacto ? '📅' : '📅 Mensal'}
               </button>
               <button
                 onClick={() => setTipoAtivo('fixo')}
-                className={`flex-1 md:flex-none md:px-8 py-4 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex-1 md:flex-none md:px-8 text-sm font-medium border-b-2 transition-all ${
+                  modoCompacto ? 'py-2' : 'py-4'
+                } ${
                   tipoAtivo === 'fixo'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-blue-700 dark:border-blue-500 text-blue-700 bg-white dark:bg-blue-900/30 dark:text-blue-400'
                     : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
                 }`}
               >
-                🔄 Fixo (Recorrente)
+                {modoCompacto ? '🔄' : '🔄 Fixo (Recorrente)'}
               </button>
             </div>
           </div>
 
-          {/* Seletor de Mês (apenas para mensal) */}
+          {/* Seletor de Mês (apenas para mensal) - Compacto quando scrolling */}
           {tipoAtivo === 'mensal' && (
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div className={`px-6 bg-gray-50 border-b border-gray-200 transition-all duration-300 ${
+              modoCompacto ? 'py-2' : 'py-4'
+            }`}>
               <div className="flex items-center justify-between">
                 <button
                   onClick={handleMesAnterior}
-                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                  className={`hover:bg-gray-200 rounded-lg transition-all ${
+                    modoCompacto ? 'p-1' : 'p-2'
+                  }`}
                   title="Mês anterior"
                 >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`text-gray-600 transition-all ${
+                    modoCompacto ? 'w-4 h-4' : 'w-5 h-5'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-800">
+                  <div className={`font-semibold text-gray-800 transition-all ${
+                    modoCompacto ? 'text-sm' : 'text-lg'
+                  }`}>
                     {getNomeMes(mesAtual)} / {anoAtual}
                   </div>
-                  {!orcamentoMensal && (
+                  {!modoCompacto && !orcamentoMensal && (
                     <button
                       onClick={handleCriarOrcamentoMensalDoFixo}
                       className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
@@ -274,10 +357,14 @@ export default function Planejamento() {
                 
                 <button
                   onClick={handleMesProximo}
-                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                  className={`hover:bg-gray-200 rounded-lg transition-all ${
+                    modoCompacto ? 'p-1' : 'p-2'
+                  }`}
                   title="Próximo mês"
                 >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`text-gray-600 transition-all ${
+                    modoCompacto ? 'w-4 h-4' : 'w-5 h-5'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -285,84 +372,142 @@ export default function Planejamento() {
             </div>
           )}
           
-          <div className="p-6 border-b border-gray-200">
+          <div className={`border-b border-gray-200 transition-all duration-300 ${
+            modoCompacto ? 'p-3' : 'p-6'
+          }`}>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {tipoAtivo === 'fixo' ? 'Orçamento Fixo (Recorrente)' : `Orçamento de ${getNomeMes(mesAtual)}/${anoAtual}`}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {tipoAtivo === 'fixo' 
-                    ? 'Itens recorrentes que se repetem mensalmente'
-                    : 'Planejamento específico deste mês com ajustes e extras'}
-                </p>
-              </div>
+              {!modoCompacto && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {tipoAtivo === 'fixo' ? 'Orçamento Fixo (Recorrente)' : `Orçamento de ${getNomeMes(mesAtual)}/${anoAtual}`}
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {tipoAtivo === 'fixo' 
+                      ? 'Itens recorrentes que se repetem mensalmente'
+                      : 'Planejamento específico deste mês com ajustes e extras'}
+                  </p>
+                </div>
+              )}
               
-              {/* Toggle Mensal/Anual */}
-              <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+              {/* Toggle Mensal/Anual - Compacto quando scrolling */}
+              <div className={`flex gap-2 bg-gray-100 rounded-lg transition-all ${
+                modoCompacto ? 'p-0.5 ml-auto' : 'p-1'
+              }`}>
                 <button
                   onClick={() => setVisualizacao('mensal')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`rounded-md text-sm font-medium transition-all ${
+                    modoCompacto ? 'px-3 py-1' : 'px-4 py-2'
+                  } ${
                     visualizacao === 'mensal'
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
-                  Mensal
+                  {modoCompacto ? 'M' : 'Mensal'}
                 </button>
                 <button
                   onClick={() => setVisualizacao('anual')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`rounded-md text-sm font-medium transition-all ${
+                    modoCompacto ? 'px-3 py-1' : 'px-4 py-2'
+                  } ${
                     visualizacao === 'anual'
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
-                  Anual
+                  {modoCompacto ? 'A' : 'Anual'}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Resumo */}
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-sm text-green-600 font-medium mb-1">
-                Receitas {visualizacao === 'mensal' ? 'Mensais' : 'Anuais'}
+          {/* Resumo - Compacto quando scrolling */}
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 bg-white transition-all duration-300 ${
+            modoCompacto ? 'p-3' : 'p-6'
+          } ${modoCompacto ? 'hidden md:grid' : ''}`}>
+            <div className={`bg-white rounded-lg shadow border-l-4 border-green-500 transition-all ${
+              modoCompacto ? 'p-2' : 'p-4'
+            }`}>
+              <div className={`text-gray-600 font-medium transition-all ${
+                modoCompacto ? 'text-xs mb-0.5' : 'text-sm mb-1'
+              }`}>
+                {modoCompacto ? '💰' : `Receitas ${visualizacao === 'mensal' ? 'Mensais' : 'Anuais'}`}
               </div>
-              <div className="text-2xl font-semibold text-green-700">
+              <div className={`font-semibold text-green-600 transition-all ${
+                modoCompacto ? 'text-base' : 'text-2xl'
+              }`}>
                 R$ {totais.receitas.toFixed(2)}
               </div>
             </div>
-            <div className="bg-red-50 rounded-lg p-4">
-              <div className="text-sm text-red-600 font-medium mb-1">
-                Despesas {visualizacao === 'mensal' ? 'Mensais' : 'Anuais'}
+            <div className={`bg-white rounded-lg shadow border-l-4 border-red-500 transition-all ${
+              modoCompacto ? 'p-2' : 'p-4'
+            }`}>
+              <div className={`text-gray-600 font-medium transition-all ${
+                modoCompacto ? 'text-xs mb-0.5' : 'text-sm mb-1'
+              }`}>
+                {modoCompacto ? '💸' : `Despesas ${visualizacao === 'mensal' ? 'Mensais' : 'Anuais'}`}
               </div>
-              <div className="text-2xl font-semibold text-red-700">
+              <div className={`font-semibold text-red-600 transition-all ${
+                modoCompacto ? 'text-base' : 'text-2xl'
+              }`}>
                 R$ {totais.despesas.toFixed(2)}
               </div>
             </div>
-            <div className={`${totais.saldo >= 0 ? 'bg-blue-50' : 'bg-orange-50'} rounded-lg p-4`}>
-              <div className={`text-sm ${totais.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'} font-medium mb-1`}>
-                Saldo {visualizacao === 'mensal' ? 'Mensal' : 'Anual'}
+            <div className={`bg-white rounded-lg shadow border-l-4 transition-all ${
+              totais.saldo >= 0 ? 'border-blue-500' : 'border-orange-500'
+            } ${
+              modoCompacto ? 'p-2' : 'p-4'
+            }`}>
+              <div className={`text-gray-600 font-medium transition-all ${
+                modoCompacto ? 'text-xs mb-0.5' : 'text-sm mb-1'
+              }`}>
+                {modoCompacto ? '📊' : `Saldo ${visualizacao === 'mensal' ? 'Mensal' : 'Anual'}`}
               </div>
-              <div className={`text-2xl font-semibold ${totais.saldo >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+              <div className={`font-semibold transition-all ${
+                totais.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'
+              } ${
+                modoCompacto ? 'text-base' : 'text-2xl'
+              }`}>
                 R$ {totais.saldo.toFixed(2)}
               </div>
             </div>
           </div>
+
+          {/* Resumo ultra-compacto para mobile quando em modo compacto */}
+          {modoCompacto && (
+            <div className="md:hidden grid grid-cols-3 gap-2 bg-white/90 backdrop-blur rounded-xl shadow-sm border border-gray-200 px-3 py-2 mb-4">
+              <div className="flex flex-col items-center text-[11px] text-gray-600">
+                <span className="text-green-600 font-semibold">R$ {totais.receitas.toFixed(0)}</span>
+                <span>Receitas</span>
+              </div>
+              <div className="flex flex-col items-center text-[11px] text-gray-600">
+                <span className="text-red-600 font-semibold">R$ {totais.despesas.toFixed(0)}</span>
+                <span>Despesas</span>
+              </div>
+              <div className="flex flex-col items-center text-[11px] text-gray-600">
+                <span className={`${totais.saldo >= 0 ? 'text-blue-600' : 'text-orange-600'} font-semibold`}>
+                  R$ {totais.saldo.toFixed(0)}
+                </span>
+                <span>Saldo</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Lista de Itens */}
         <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div className={`border-b border-gray-200 flex items-center justify-between ${
+            modoCompacto ? 'p-4' : 'p-6'
+          }`}>
             <h3 className="text-lg font-semibold text-gray-800">Itens do Orçamento</h3>
             <button
               onClick={() => {
                 setItemEmEdicao(null);
                 setModalAberto(true);
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ${
+                modoCompacto ? 'px-3 py-2' : 'px-4 py-2'
+              }`}
             >
               + Adicionar Item
             </button>

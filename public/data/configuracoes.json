@@ -1,5 +1,287 @@
 {
   "id": "config",
-  "permitirCriarContasRaiz": false,
-  "tema": "dark"
+  "permitirCriarContasRaiz": true,
+  "iconesCategoria": {
+    "ativo": "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>",
+    "passivo": "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>",
+    "patrimonio": "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>",
+    "receita": "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\" /></svg>",
+    "despesa": "<svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 6v6m0 0v6m0-6h6m-6 0H6\" /></svg>"
+  },
+  "contasBancarias": [
+    {
+      "id": "bb-cc-1",
+      "nome": "Banco do Brasil - Conta Corrente",
+      "contaCodigo": "1.1.01.001",
+      "contaNome": "Caixa",
+      "banco": "001",
+      "agencia": "1234-5",
+      "numeroConta": "12345-6",
+      "padrao": true,
+      "ativa": true,
+      "contaPadraoReceita": "4.1.01.001",
+      "contaPadraoDespesa": "5.99.99.999",
+      "regrasClassificacao": [
+        {
+          "id": "regra-1",
+          "palavrasChave": [
+            "supermercado",
+            "mercado",
+            "alimentação",
+            "padaria",
+            "açougue",
+            "hortifruti"
+          ],
+          "contaDestino": "5.3.01.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-2",
+          "palavrasChave": [
+            "posto",
+            "combustível",
+            "gasolina",
+            "etanol",
+            "diesel",
+            "shell",
+            "ipiranga"
+          ],
+          "contaDestino": "5.3.02.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-3",
+          "palavrasChave": [
+            "restaurante",
+            "lanchonete",
+            "pizza",
+            "ifood",
+            "uber eats",
+            "delivery"
+          ],
+          "contaDestino": "5.3.01.002",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-4",
+          "palavrasChave": [
+            "farmácia",
+            "drogaria",
+            "remédio",
+            "consulta",
+            "médico",
+            "hospital",
+            "clínica"
+          ],
+          "contaDestino": "5.3.05.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-5",
+          "palavrasChave": [
+            "energia",
+            "cpfl",
+            "enel",
+            "cemig",
+            "luz",
+            "eletricidade"
+          ],
+          "contaDestino": "5.3.03.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-6",
+          "palavrasChave": [
+            "água",
+            "sabesp",
+            "saneamento",
+            "abastecimento"
+          ],
+          "contaDestino": "5.3.03.002",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-7",
+          "palavrasChave": [
+            "internet",
+            "vivo",
+            "claro",
+            "tim",
+            "oi",
+            "telefone",
+            "celular"
+          ],
+          "contaDestino": "5.3.03.003",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-8",
+          "palavrasChave": [
+            "aluguel",
+            "condomínio",
+            "iptu",
+            "locação"
+          ],
+          "contaDestino": "5.3.04.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-9",
+          "palavrasChave": [
+            "cinema",
+            "teatro",
+            "netflix",
+            "spotify",
+            "amazon prime",
+            "disney"
+          ],
+          "contaDestino": "5.3.06.001",
+          "tipo": "saida",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-10",
+          "palavrasChave": [
+            "salário",
+            "salario",
+            "pagamento",
+            "vencimento"
+          ],
+          "contaDestino": "4.1.01.001",
+          "tipo": "entrada",
+          "prioridade": 1,
+          "ativo": true
+        },
+        {
+          "id": "regra-11",
+          "palavrasChave": [
+            "freelance",
+            "freela",
+            "extra",
+            "bico"
+          ],
+          "contaDestino": "4.1.02.001",
+          "tipo": "entrada",
+          "prioridade": 1,
+          "ativo": true
+        }
+      ]
+    }
+  ],
+  "autoPatterns": [
+    {
+      "tipo": "despesa-vista",
+      "mascaraDebito": "4.*",
+      "mascaraCredito": "1.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "despesa-vista-4.*-1.1.01.*"
+    },
+    {
+      "tipo": "despesa-prazo",
+      "mascaraDebito": "4.*",
+      "mascaraCredito": "2.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "despesa-prazo-4.*-2.1.01.*"
+    },
+    {
+      "tipo": "receita-vista",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "3.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "receita-vista-1.1.01.*-3.*"
+    },
+    {
+      "tipo": "receita-prazo",
+      "mascaraDebito": "1.1.03.*",
+      "mascaraCredito": "3.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "receita-prazo-1.1.03.*-3.*"
+    },
+    {
+      "tipo": "pagamento-divida",
+      "mascaraDebito": "2.*",
+      "mascaraCredito": "1.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "pagamento-divida-2.*-1.1.01.*"
+    },
+    {
+      "tipo": "recebimento-credito",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "1.1.03.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "recebimento-credito-1.1.01.*-1.1.03.*"
+    },
+    {
+      "tipo": "investimento",
+      "mascaraDebito": "1.1.02.*",
+      "mascaraCredito": "1.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "investimento-1.1.02.*-1.1.01.*"
+    },
+    {
+      "tipo": "resgate-investimento",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "1.1.02.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "resgate-investimento-1.1.01.*-1.1.02.*"
+    },
+    {
+      "tipo": "emprestimo-recebido",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "2.1.02.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "emprestimo-recebido-1.1.01.*-2.1.02.*"
+    },
+    {
+      "tipo": "transferencia-entre-contas",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "1.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "transferencia-entre-contas-1.1.01.*-1.1.01.*"
+    },
+    {
+      "tipo": "aporte-capital",
+      "mascaraDebito": "1.1.01.*",
+      "mascaraCredito": "5.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "aporte-capital-1.1.01.*-5.*"
+    },
+    {
+      "tipo": "retirada-capital",
+      "mascaraDebito": "5.*",
+      "mascaraCredito": "1.1.01.*",
+      "incluirFilhas": true,
+      "bloquearSelecao": false,
+      "id": "retirada-capital-5.*-1.1.01.*"
+    }
+  ],
+  "tema": "light"
 }

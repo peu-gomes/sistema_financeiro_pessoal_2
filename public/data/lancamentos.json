@@ -138,5 +138,626 @@
     ],
     "criadoEm": "2025-12-02T11:30:00.000Z",
     "atualizadoEm": "2025-12-08T03:47:09.000Z"
+  },
+  {
+    "id": "1765138500000",
+    "data": "2025-12-02",
+    "documento": "COMP005",
+    "historico": "Farmácia - Remédios diversos",
+    "partidas": [
+      {
+        "id": "1765138500001-d",
+        "contaCodigo": "5.5.01.001",
+        "contaNome": "Saúde e Bem-estar",
+        "natureza": "debito",
+        "valor": 125
+      },
+      {
+        "id": "1765138500001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 125
+      }
+    ],
+    "criadoEm": "2025-12-02T15:20:00.000Z"
+  },
+  {
+    "id": "1765138600000",
+    "data": "2025-12-01",
+    "documento": "COMP006",
+    "historico": "Restaurante - Almoço com amigos",
+    "partidas": [
+      {
+        "id": "1765138600001-d",
+        "contaCodigo": "5.3.02.001",
+        "contaNome": "Refeições Externas",
+        "natureza": "debito",
+        "valor": 85
+      },
+      {
+        "id": "1765138600001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 85
+      }
+    ],
+    "criadoEm": "2025-12-01T12:30:00.000Z"
+  },
+  {
+    "id": "1765138700000",
+    "data": "2025-11-30",
+    "documento": "COMP007",
+    "historico": "Combustível - Carro",
+    "partidas": [
+      {
+        "id": "1765138700001-d",
+        "contaCodigo": "5.6.01.001",
+        "contaNome": "Transporte",
+        "natureza": "debito",
+        "valor": 200
+      },
+      {
+        "id": "1765138700001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 200
+      }
+    ],
+    "criadoEm": "2025-11-30T08:45:00.000Z"
+  },
+  {
+    "id": "1765138800000",
+    "data": "2025-11-29",
+    "documento": "COMP008",
+    "historico": "Supermercado - Compras semanais",
+    "partidas": [
+      {
+        "id": "1765138800001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 350
+      },
+      {
+        "id": "1765138800001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 350
+      }
+    ],
+    "criadoEm": "2025-11-29T18:00:00.000Z"
+  },
+  {
+    "id": "1765138900000",
+    "data": "2025-11-28",
+    "documento": "COMP009",
+    "historico": "Academia - Mensalidade",
+    "partidas": [
+      {
+        "id": "1765138900001-d",
+        "contaCodigo": "5.5.02.001",
+        "contaNome": "Academia e Esportes",
+        "natureza": "debito",
+        "valor": 120
+      },
+      {
+        "id": "1765138900001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 120
+      }
+    ],
+    "criadoEm": "2025-11-28T10:00:00.000Z"
+  },
+  {
+    "id": "1765139000000",
+    "data": "2025-11-27",
+    "documento": "COMP010",
+    "historico": "Internet/Telefone - Conta mensal",
+    "partidas": [
+      {
+        "id": "1765139000001-d",
+        "contaCodigo": "5.4.01.001",
+        "contaNome": "Assinaturas e Serviços",
+        "natureza": "debito",
+        "valor": 99
+      },
+      {
+        "id": "1765139000001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 99
+      }
+    ],
+    "criadoEm": "2025-11-27T14:30:00.000Z"
+  },
+  {
+    "id": "1765139100000",
+    "data": "2025-11-26",
+    "documento": "COMP011",
+    "historico": "Loja de roupas - Compras pessoais",
+    "partidas": [
+      {
+        "id": "1765139100001-d",
+        "contaCodigo": "5.7.01.001",
+        "contaNome": "Vestuário",
+        "natureza": "debito",
+        "valor": 250
+      },
+      {
+        "id": "1765139100001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 250
+      }
+    ],
+    "criadoEm": "2025-11-26T16:15:00.000Z"
+  },
+  {
+    "id": "1765139200000",
+    "data": "2025-11-25",
+    "documento": "COMP012",
+    "historico": "Café e lanche - Compra rápida",
+    "partidas": [
+      {
+        "id": "1765139200001-d",
+        "contaCodigo": "5.3.02.001",
+        "contaNome": "Refeições Externas",
+        "natureza": "debito",
+        "valor": 35
+      },
+      {
+        "id": "1765139200001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 35
+      }
+    ],
+    "criadoEm": "2025-11-25T09:20:00.000Z"
+  },
+  {
+    "id": "1765139300000",
+    "data": "2025-11-24",
+    "documento": "COMP013",
+    "historico": "Prescrição - Gás",
+    "partidas": [
+      {
+        "id": "1765139300001-d",
+        "contaCodigo": "5.2.01.001",
+        "contaNome": "Energia e Água",
+        "natureza": "debito",
+        "valor": 90
+      },
+      {
+        "id": "1765139300001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 90
+      }
+    ],
+    "criadoEm": "2025-11-24T11:00:00.000Z"
+  },
+  {
+    "id": "1765139400000",
+    "data": "2025-11-23",
+    "documento": "COMP014",
+    "historico": "Pizzaria - Jantar em família",
+    "partidas": [
+      {
+        "id": "1765139400001-d",
+        "contaCodigo": "5.3.02.001",
+        "contaNome": "Refeições Externas",
+        "natureza": "debito",
+        "valor": 95
+      },
+      {
+        "id": "1765139400001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 95
+      }
+    ],
+    "criadoEm": "2025-11-23T20:45:00.000Z"
+  },
+  {
+    "id": "1765139500000",
+    "data": "2025-11-22",
+    "documento": "COMP015",
+    "historico": "Drogaria - Produtos de higiene",
+    "partidas": [
+      {
+        "id": "1765139500001-d",
+        "contaCodigo": "5.5.01.001",
+        "contaNome": "Saúde e Bem-estar",
+        "natureza": "debito",
+        "valor": 60
+      },
+      {
+        "id": "1765139500001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 60
+      }
+    ],
+    "criadoEm": "2025-11-22T13:25:00.000Z"
+  },
+  {
+    "id": "1765139600000",
+    "data": "2025-11-21",
+    "documento": "COMP016",
+    "historico": "Livraria - Livros diversos",
+    "partidas": [
+      {
+        "id": "1765139600001-d",
+        "contaCodigo": "5.8.01.001",
+        "contaNome": "Educação e Cultura",
+        "natureza": "debito",
+        "valor": 120
+      },
+      {
+        "id": "1765139600001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 120
+      }
+    ],
+    "criadoEm": "2025-11-21T15:40:00.000Z"
+  },
+  {
+    "id": "1765139700000",
+    "data": "2025-11-20",
+    "documento": "COMP017",
+    "historico": "Pastelaria - Café da manhã",
+    "partidas": [
+      {
+        "id": "1765139700001-d",
+        "contaCodigo": "5.3.02.001",
+        "contaNome": "Refeições Externas",
+        "natureza": "debito",
+        "valor": 25
+      },
+      {
+        "id": "1765139700001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 25
+      }
+    ],
+    "criadoEm": "2025-11-20T07:30:00.000Z"
+  },
+  {
+    "id": "1765139800000",
+    "data": "2025-11-19",
+    "documento": "COMP018",
+    "historico": "Óptica - Óculos novo",
+    "partidas": [
+      {
+        "id": "1765139800001-d",
+        "contaCodigo": "5.5.01.001",
+        "contaNome": "Saúde e Bem-estar",
+        "natureza": "debito",
+        "valor": 450
+      },
+      {
+        "id": "1765139800001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 450
+      }
+    ],
+    "criadoEm": "2025-11-19T10:15:00.000Z"
+  },
+  {
+    "id": "1765139900000",
+    "data": "2025-11-18",
+    "documento": "COMP019",
+    "historico": "Supermercado - Compras semanais",
+    "partidas": [
+      {
+        "id": "1765139900001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 420
+      },
+      {
+        "id": "1765139900001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 420
+      }
+    ],
+    "criadoEm": "2025-11-18T17:50:00.000Z"
+  },
+  {
+    "id": "1765140000000",
+    "data": "2025-11-17",
+    "documento": "COMP020",
+    "historico": "Cinema - Ingresso e pipoca",
+    "partidas": [
+      {
+        "id": "1765140000001-d",
+        "contaCodigo": "5.9.01.001",
+        "contaNome": "Lazer e Entretenimento",
+        "natureza": "debito",
+        "valor": 65
+      },
+      {
+        "id": "1765140000001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 65
+      }
+    ],
+    "criadoEm": "2025-11-17T21:00:00.000Z"
+  },
+  {
+    "id": "1765140100000",
+    "data": "2025-11-16",
+    "documento": "COMP021",
+    "historico": "Manutenção - Revisão do carro",
+    "partidas": [
+      {
+        "id": "1765140100001-d",
+        "contaCodigo": "5.6.02.001",
+        "contaNome": "Manutenção Veículo",
+        "natureza": "debito",
+        "valor": 350
+      },
+      {
+        "id": "1765140100001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 350
+      }
+    ],
+    "criadoEm": "2025-11-16T09:30:00.000Z"
+  },
+  {
+    "id": "1765140200000",
+    "data": "2025-11-15",
+    "documento": "COMP022",
+    "historico": "Supermercado - Compras alimentos",
+    "partidas": [
+      {
+        "id": "1765140200001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 280
+      },
+      {
+        "id": "1765140200001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 280
+      }
+    ],
+    "criadoEm": "2025-11-15T19:20:00.000Z"
+  },
+  {
+    "id": "1765140300000",
+    "data": "2025-11-14",
+    "documento": "COMP023",
+    "historico": "Confeitaria - Bolo de aniversário",
+    "partidas": [
+      {
+        "id": "1765140300001-d",
+        "contaCodigo": "5.3.02.001",
+        "contaNome": "Refeições Externas",
+        "natureza": "debito",
+        "valor": 85
+      },
+      {
+        "id": "1765140300001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 85
+      }
+    ],
+    "criadoEm": "2025-11-14T14:45:00.000Z"
+  },
+  {
+    "id": "1765140400000",
+    "data": "2025-11-13",
+    "documento": "COMP024",
+    "historico": "Barberia - Corte de cabelo",
+    "partidas": [
+      {
+        "id": "1765140400001-d",
+        "contaCodigo": "5.7.02.001",
+        "contaNome": "Cuidados Pessoais",
+        "natureza": "debito",
+        "valor": 50
+      },
+      {
+        "id": "1765140400001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 50
+      }
+    ],
+    "criadoEm": "2025-11-13T11:00:00.000Z"
+  },
+  {
+    "id": "1765140500000",
+    "data": "2025-11-12",
+    "documento": "COMP025",
+    "historico": "Sorveteria - Passeio no parque",
+    "partidas": [
+      {
+        "id": "1765140500001-d",
+        "contaCodigo": "5.9.01.001",
+        "contaNome": "Lazer e Entretenimento",
+        "natureza": "debito",
+        "valor": 40
+      },
+      {
+        "id": "1765140500001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 40
+      }
+    ],
+    "criadoEm": "2025-11-12T15:30:00.000Z"
+  },
+  {
+    "id": "1765140600000",
+    "data": "2025-11-11",
+    "documento": "REC002",
+    "historico": "Freelance - Trabalho extra",
+    "partidas": [
+      {
+        "id": "1765140600001-d",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "debito",
+        "valor": 800
+      },
+      {
+        "id": "1765140600001-c",
+        "contaCodigo": "4.2.01.001",
+        "contaNome": "Outras Receitas",
+        "natureza": "credito",
+        "valor": 800
+      }
+    ],
+    "criadoEm": "2025-11-11T20:00:00.000Z"
+  },
+  {
+    "id": "1765140700000",
+    "data": "2025-11-10",
+    "documento": "COMP026",
+    "historico": "Comércio - Eletrônicos/acessórios",
+    "partidas": [
+      {
+        "id": "1765140700001-d",
+        "contaCodigo": "5.10.01.001",
+        "contaNome": "Utensílios e Eletrônicos",
+        "natureza": "debito",
+        "valor": 150
+      },
+      {
+        "id": "1765140700001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 150
+      }
+    ],
+    "criadoEm": "2025-11-10T16:20:00.000Z"
+  },
+  {
+    "id": "1765140800000",
+    "data": "2025-11-09",
+    "documento": "COMP027",
+    "historico": "Água engarrafada - Compra para casa",
+    "partidas": [
+      {
+        "id": "1765140800001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 35
+      },
+      {
+        "id": "1765140800001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 35
+      }
+    ],
+    "criadoEm": "2025-11-09T10:40:00.000Z"
+  },
+  {
+    "id": "1765140900000",
+    "data": "2025-11-08",
+    "documento": "COMP028",
+    "historico": "Padaria - Compra de pão",
+    "partidas": [
+      {
+        "id": "1765140900001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 28
+      },
+      {
+        "id": "1765140900001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 28
+      }
+    ],
+    "criadoEm": "2025-11-08T07:15:00.000Z"
+  },
+  {
+    "id": "1765141000000",
+    "data": "2025-11-07",
+    "documento": "COMP029",
+    "historico": "Limpeza - Produto de limpeza",
+    "partidas": [
+      {
+        "id": "1765141000001-d",
+        "contaCodigo": "5.11.01.001",
+        "contaNome": "Limpeza e Manutenção",
+        "natureza": "debito",
+        "valor": 75
+      },
+      {
+        "id": "1765141000001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 75
+      }
+    ],
+    "criadoEm": "2025-11-07T14:00:00.000Z"
+  },
+  {
+    "id": "1765141100000",
+    "data": "2025-11-06",
+    "documento": "COMP030",
+    "historico": "Supermercado - Compras semanais",
+    "partidas": [
+      {
+        "id": "1765141100001-d",
+        "contaCodigo": "5.3.01.001",
+        "contaNome": "Alimentação",
+        "natureza": "debito",
+        "valor": 390
+      },
+      {
+        "id": "1765141100001-c",
+        "contaCodigo": "1.1.01.001",
+        "contaNome": "Caixa",
+        "natureza": "credito",
+        "valor": 390
+      }
+    ],
+    "criadoEm": "2025-11-06T18:45:00.000Z"
   }
 ]

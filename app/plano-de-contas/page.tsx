@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Header from '@/components/Header';
 import { 
   validarCodigo, 
   gerarProximoCodigo, 
@@ -13,9 +14,9 @@ import {
   isCodigoCompleto,
   validarMascara
 } from '@/lib/maskUtils';
+import { getIconeCategoria, ICONES_PADRAO } from '@/lib/iconesUtils';
 import { getContas, saveContas, getConfiguracoes } from '@/lib/api';
 import type { ContaBancaria } from '@/lib/api';
-import Header from '@/components/Header';
 
 interface SugestaoIA {
   id: string;
@@ -53,15 +54,15 @@ interface FormData {
 // Dados iniciais - removidos, serão carregados da API
 
 // Componentes auxiliares
-const IconeCategoria = ({ categoria }: { categoria: string }) => {
-  const icons: Record<string, React.ReactNode> = {
-    ativo: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    passivo: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    patrimonio: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-    receita: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-    despesa: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>,
-  };
-  return icons[categoria] || null;
+const IconeCategoria = ({ categoria, iconesCustomizados }: { categoria: string; iconesCustomizados?: Record<string, string> }) => {
+  const iconeSvg = iconesCustomizados?.[categoria] || getIconeCategoria(categoria as any);
+  
+  return (
+    <div 
+      className="w-4 h-4 flex items-center justify-center" 
+      dangerouslySetInnerHTML={{ __html: iconeSvg }} 
+    />
+  );
 };
 
 const corCategoria = (categoria: string) => {
@@ -77,8 +78,8 @@ const corCategoria = (categoria: string) => {
 
 const BadgeTipoConta = ({ tipo }: { tipo: 'sintetica' | 'analitica' }) => {
   const estilos = {
-    sintetica: 'bg-purple-100 text-purple-800',
-    analitica: 'bg-blue-100 text-blue-800',
+    sintetica: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100',
+    analitica: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
   };
   const textos = {
     sintetica: 'Sintética',
@@ -736,7 +737,8 @@ const LinhaConta = ({
   onEdit,
   onDelete,
   onAddSubconta,
-  mascara
+  mascara,
+  iconesCategoria
 }: any) => {
   const temSubcontas = conta.subcontas && conta.subcontas.length > 0;
   const expanded = expandidos[conta.id] !== false;
@@ -771,7 +773,7 @@ const LinhaConta = ({
 
             {/* Ícone */}
             <div className={`${corCategoria(conta.categoria)} flex-shrink-0`}>
-              <IconeCategoria categoria={conta.categoria} />
+              <IconeCategoria categoria={conta.categoria} iconesCustomizados={iconesCategoria} />
             </div>
 
             {/* Código e nome */}
@@ -861,6 +863,7 @@ const LinhaConta = ({
               onDelete={onDelete}
               onAddSubconta={onAddSubconta}
               mascara={mascara}
+              iconesCategoria={iconesCategoria}
             />
           ))}
         </>
@@ -1114,6 +1117,8 @@ export default function PlanoDeContas() {
   const [sugestaoSelecionadaId, setSugestaoSelecionadaId] = useState<string | null>(null);
   const [previewSelecionado, setPreviewSelecionado] = useState<PreviewIA | null>(null);
   const [previewConta, setPreviewConta] = useState<{ node: ContaComPreview; parentId: string } | null>(null);
+  const [iconesCategoria, setIconesCategoria] = useState<Record<string, string>>({});
+  const [modoCompacto, setModoCompacto] = useState(false);
 
   const handleSelecionarSugestao = (id: string | null) => {
     if (!id) {
@@ -1158,6 +1163,11 @@ export default function PlanoDeContas() {
         const config = await getConfiguracoes();
         setPermitirContasRaiz(config.permitirCriarContasRaiz);
 
+        // Carregar ícones customizados
+        if (config.iconesCategoria) {
+          setIconesCategoria(config.iconesCategoria);
+        }
+
         // Carregar máscara do localStorage (mantido para compatibilidade)
         const mascaraSalva = localStorage.getItem('mascara');
         if (mascaraSalva) {
@@ -1173,6 +1183,16 @@ export default function PlanoDeContas() {
     };
 
     carregarDados();
+  }, []);
+
+  // Listener de scroll para modo compacto
+  useEffect(() => {
+    const handleScroll = () => {
+      setModoCompacto(window.scrollY > 150);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Salvar contas na API quando houver mudanças
@@ -1556,56 +1576,89 @@ export default function PlanoDeContas() {
     }
   };
 
+  // Calcular estatísticas para resumo
+  const contarContas = (lista: ContaBancaria[]): number => {
+    let total = 0;
+    lista.forEach(conta => {
+      total += 1;
+      if (conta.subcontas) {
+        total += contarContas(conta.subcontas);
+      }
+    });
+    return total;
+  };
+
+  const contarPorCategoria = (lista: ContaBancaria[], cat: string): number => {
+    let total = 0;
+    lista.forEach(conta => {
+      if (conta.categoria === cat) total += 1;
+      if (conta.subcontas) {
+        total += contarPorCategoria(conta.subcontas, cat);
+      }
+    });
+    return total;
+  };
+
+  const totalContas = contarContas(contas);
+  const totalAnaliticas = contas.reduce((acc, c) => {
+    const contar = (conta: ContaBancaria): number => {
+      let total = conta.tipoCC === 'analitica' ? 1 : 0;
+      if (conta.subcontas) {
+        conta.subcontas.forEach(sub => total += contar(sub));
+      }
+      return total;
+    };
+    return acc + contar(c);
+  }, 0);
+
+  if (!mounted) return null;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
-      {/* Header */}
-      {/* Header */}
-      <div className="sticky top-0 z-40">
-        <Header />
-      </div>
-
-      {/* Navigation Desktop */}
-      <nav className="hidden md:block bg-white border-b border-gray-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex space-x-1">
-            <a href="/" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent whitespace-nowrap">Dashboard</a>
-            <a href="/plano-de-contas" className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Plano de Contas</a>
-            <a href="/planejamento" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent whitespace-nowrap">Planejamento</a>
-            <a href="/lancamentos" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent whitespace-nowrap">Lançamentos</a>
-            <a href="/configuracoes" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent whitespace-nowrap">Configurações</a>
-          </div>
-        </div>
-      </nav>
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header com busca e filtros - Sticky */}
-        <div className="mb-6 bg-white rounded-lg shadow sticky top-[65px] z-20 transition-all duration-300">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center mb-4">
+        {/* Header com busca e filtros - Sticky com modo compacto */}
+        <div className={`mb-6 bg-white rounded-lg shadow sticky top-[65px] z-20 transition-all duration-300 ${
+          modoCompacto ? 'shadow-md' : ''
+        }`}>
+          {/* Botão Nova Conta Raiz e Busca */}
+          <div className={`border-b border-gray-200 transition-all duration-300 ${
+            modoCompacto ? 'p-3' : 'p-6'
+          }`}>
+            <div className={`flex items-center gap-3 transition-all ${
+              modoCompacto ? 'mb-2' : 'mb-4'
+            }`}>
               {mounted && permitirContasRaiz && (
                 <button
                   onClick={() => setModalCriarContaRaizAberto(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+                  className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium flex items-center gap-2 whitespace-nowrap ${
+                    modoCompacto ? 'px-3 py-1.5' : 'px-4 py-2'
+                  }`}
                   title="Criar nova conta raiz"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`transition-all ${
+                    modoCompacto ? 'w-3.5 h-3.5' : 'w-4 h-4'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Nova Conta Raiz
+                  {!modoCompacto && 'Nova Conta Raiz'}
                 </button>
               )}
               <div className="flex-1"></div>
             </div>
             
-            {/* Campo de Busca */}
+            {/* Campo de Busca - Compacto quando scrolling */}
             <div className="relative">
               <input
                 type="text"
-                placeholder="Buscar por nome ou código..."
+                placeholder={modoCompacto ? "Buscar..." : "Buscar por nome ou código..."}
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400 transition-all ${
+                  modoCompacto ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+                }`}
               />
               {busca && (
                 <button
@@ -1613,7 +1666,9 @@ export default function PlanoDeContas() {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   title="Limpar busca"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`transition-all ${
+                    modoCompacto ? 'w-4 h-4' : 'w-5 h-5'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -1621,63 +1676,77 @@ export default function PlanoDeContas() {
             </div>
           </div>
 
-          {/* Filtros rápidos - dentro do sticky */}
-          <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <div className="flex flex-wrap gap-2">
+          {/* Filtros rápidos - Compactos quando scrolling */}
+          <div className={`bg-gray-50 border-t border-gray-200 transition-all duration-300 overflow-x-auto ${
+            modoCompacto ? 'px-3 py-2' : 'px-6 py-3'
+          }`}>
+            <div className="flex flex-nowrap gap-2 min-w-max md:min-w-0">
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'todos' ? 'todos' : 'todos')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+                } ${
                   filtroCategoria === 'todos'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
               >
-                <div className="w-2 h-2 rounded-full bg-current"></div>
-                Todos
+                <div className={`rounded-full bg-current transition-all ${
+                  modoCompacto ? 'w-1.5 h-1.5' : 'w-2 h-2'
+                }`}></div>
+                {modoCompacto ? 'Todos' : 'Todos'}
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'ativo' ? 'todos' : 'ativo')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+                } ${
                   filtroCategoria === 'ativo'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-white text-blue-600 hover:bg-blue-50 border border-gray-300'
                 }`}
               >
-                <IconeCategoria categoria="ativo" />
-                Ativo
+                <IconeCategoria categoria="ativo" iconesCustomizados={iconesCategoria} />
+                {!modoCompacto && 'Ativo'}
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'passivo' ? 'todos' : 'passivo')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+                } ${
                   filtroCategoria === 'passivo'
                     ? 'bg-red-600 text-white shadow-sm'
                     : 'bg-white text-red-600 hover:bg-red-50 border border-gray-300'
                 }`}
               >
-                <IconeCategoria categoria="passivo" />
-                Passivo
+                <IconeCategoria categoria="passivo" iconesCustomizados={iconesCategoria} />
+                {!modoCompacto && 'Passivo'}
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'receita' ? 'todos' : 'receita')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+                } ${
                   filtroCategoria === 'receita'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'bg-white text-emerald-600 hover:bg-emerald-50 border border-gray-300'
                 }`}
               >
-                <IconeCategoria categoria="receita" />
-                Receita
+                <IconeCategoria categoria="receita" iconesCustomizados={iconesCategoria} />
+                {!modoCompacto && 'Receita'}
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'despesa' ? 'todos' : 'despesa')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+                } ${
                   filtroCategoria === 'despesa'
                     ? 'bg-orange-600 text-white shadow-sm'
                     : 'bg-white text-orange-600 hover:bg-orange-50 border border-gray-300'
                 }`}
               >
-                <IconeCategoria categoria="despesa" />
-                Despesa
+                <IconeCategoria categoria="despesa" iconesCustomizados={iconesCategoria} />
+                {!modoCompacto && 'Despesa'}
               </button>
             </div>
           </div>
@@ -1698,6 +1767,7 @@ export default function PlanoDeContas() {
                   onAddSubconta={handleAddSubconta}
                   onRename={handleRename}
                   mascara={mascara}
+                  iconesCategoria={iconesCategoria}
                 />
               ))
             ) : (
@@ -1790,6 +1860,30 @@ export default function PlanoDeContas() {
 
       {/* Navigation Mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 [padding-bottom:max(1rem,env(safe-area-inset-bottom))]">
+        {/* Resumo Compacto Mobile - Aparece ao rolar */}
+        {modoCompacto && totalContas > 0 && (
+          <div className="flex items-center justify-around px-3 py-1.5 text-xs bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center gap-1">
+              <span className="text-gray-500">Total:</span>
+              <span className="font-semibold text-blue-600">{totalContas}</span>
+            </div>
+            <div className="w-px h-3 bg-gray-300"></div>
+            <div className="flex items-center gap-1">
+              <span className="text-gray-500">Analít.:</span>
+              <span className="font-semibold text-green-600">{totalAnaliticas}</span>
+            </div>
+            {busca && (
+              <>
+                <div className="w-px h-3 bg-gray-300"></div>
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-500">Filtro:</span>
+                  <span className="font-semibold text-orange-600">{contas_filtradas.length}</span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        
         <div className="flex justify-around items-center h-16">
           <a href="/" className="flex flex-col items-center justify-center flex-1 h-full text-gray-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>

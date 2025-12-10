@@ -1,56 +1,69 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getConfiguracoes, saveConfiguracoes } from '@/lib/api';
-import { getMascaraPadrao, validarMascara } from '@/lib/maskUtils';
+import { useEffect, useMemo, useState } from 'react';
+import { ICONES_DISPONIVEIS, ICONES_PADRAO, type TipoCategoria } from '@/lib/iconesUtils';
+import { validarMascara } from '@/lib/maskUtils';
 import { useTheme } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import { useConfiguracoesData } from './hooks/useConfiguracoes';
 
 export default function Configuracoes() {
   const { tema, setTema } = useTheme();
-  const [permitirContasRaiz, setPermitirContasRaiz] = useState(false);
-  const [mascara, setMascara] = useState(getMascaraPadrao().mascara);
-  const [mounted, setMounted] = useState(false);
+  const {
+    permitirContasRaiz,
+    setPermitirContasRaiz,
+    mascara,
+    setMascara,
+    iconesCategoria,
+    setIconesCategoria,
+    autoPatterns,
+    setAutoPatterns,
+    bancos,
+    loading,
+    erro,
+    recarregar,
+    salvarConfiguracoes,
+  } = useConfiguracoesData();
   const [modalEditarMascaraAberto, setModalEditarMascaraAberto] = useState(false);
   const [novaMascara, setNovaMascara] = useState('');
   const [erroMascara, setErroMascara] = useState('');
+  const [mensagemMascara, setMensagemMascara] = useState('');
+  const [feedback, setFeedback] = useState<{ tipo: 'success' | 'error'; mensagem: string } | null>(null);
+  const [salvandoIcones, setSalvandoIcones] = useState(false);
+  const [salvandoPadroes, setSalvandoPadroes] = useState(false);
+  
+  // Estado de expansão das seções
+  const [secoesExpanded, setSecoesExpanded] = useState<Record<string, boolean>>({
+    mascara: false,
+    icones: false,
+    padroes: false,
+    bancos: false,
+  });
+
+  const categorias = useMemo<TipoCategoria[]>(
+    () => ['ativo', 'passivo', 'patrimonio', 'receita', 'despesa'],
+    [],
+  );
+  const iconesDisponiveis = useMemo(() => Object.entries(ICONES_DISPONIVEIS), []);
 
   useEffect(() => {
-    // Carregar configuração da API
-    const carregarConfiguracoes = async () => {
-      try {
-        const config = await getConfiguracoes();
-        setPermitirContasRaiz(config.permitirCriarContasRaiz);
-        
-        // Carregar máscara do localStorage
-        const mascaraSalva = localStorage.getItem('mascara');
-        if (mascaraSalva) {
-          setMascara(mascaraSalva);
-        }
-        
-        setMounted(true);
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
-        setMounted(true);
-      }
-    };
-
-    carregarConfiguracoes();
-  }, []);
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 3500);
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   const handleToggleContasRaiz = async () => {
     const novoValor = !permitirContasRaiz;
     setPermitirContasRaiz(novoValor);
     
     try {
-      await saveConfiguracoes({
-        id: 'config',
-        permitirCriarContasRaiz: novoValor
-      });
+      await salvarConfiguracoes({ permitirCriarContasRaiz: novoValor });
+      setFeedback({ tipo: 'success', mensagem: novoValor ? 'Criação de contas raiz habilitada' : 'Criação de contas raiz desabilitada' });
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       // Reverte mudança em caso de erro
       setPermitirContasRaiz(!novoValor);
+      setFeedback({ tipo: 'error', mensagem: 'Erro ao salvar configuração de contas raiz' });
     }
   };
 
@@ -62,6 +75,7 @@ export default function Configuracoes() {
 
   const handleSalvarMascara = () => {
     setErroMascara('');
+    setMensagemMascara('');
 
     if (!novaMascara.trim()) {
       setErroMascara('Máscara é obrigatória');
@@ -74,29 +88,42 @@ export default function Configuracoes() {
     }
 
     setMascara(novaMascara);
-    localStorage.setItem('mascara', novaMascara);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mascara', novaMascara);
+    }
+    setMensagemMascara('Máscara atualizada');
+    setFeedback({ tipo: 'success', mensagem: 'Máscara salva com sucesso' });
     setModalEditarMascaraAberto(false);
   };
 
-  if (!mounted) return null;
+  if (erro) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+        <div className="max-w-md w-full bg-white border border-red-200 rounded-lg p-6 text-center shadow-sm">
+          <p className="text-red-700 font-medium mb-3">{erro}</p>
+          <button
+            onClick={recarregar}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600 text-sm">Carregando configurações...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
       {/* Header */}
       <Header />
-
-      {/* Navigation Desktop */}
-      <nav className="bg-white border-b border-gray-200 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex space-x-8">
-            <a href="/" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Dashboard</a>
-            <a href="/plano-de-contas" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Plano de Contas</a>
-            <a href="/planejamento" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Planejamento</a>
-            <a href="/lancamentos" className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-800 hover:border-gray-300 border-b-2 border-transparent whitespace-nowrap">Lançamentos</a>
-            <a href="/configuracoes" className="px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Configurações</a>
-          </div>
-        </div>
-      </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -105,6 +132,19 @@ export default function Configuracoes() {
             Configurações
           </h2>
 
+          {feedback && (
+            <div
+              className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm shadow-sm border ${
+                feedback.tipo === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}
+            >
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${feedback.tipo === 'success' ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span>{feedback.mensagem}</span>
+            </div>
+          )}
+
           {/* Plano de Contas Section */}
           <div className="space-y-6">
             <div className="border-b border-gray-200 pb-6">
@@ -112,27 +152,56 @@ export default function Configuracoes() {
                 Plano de Contas
               </h3>
 
-              {/* Máscara de Codificação */}
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              {/* Máscara de Codificação - Acordeão */}
+              <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setSecoesExpanded({ ...secoesExpanded, mascara: !secoesExpanded.mascara })}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                >
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                    <div className="text-sm font-medium text-gray-700">
                       Máscara de Codificação
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
-                      Define o formato dos códigos das contas (ex: 9.9.99.999)
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Define o formato dos códigos das contas
                     </p>
-                    <code className="bg-white px-3 py-1.5 rounded border border-gray-300 text-sm font-mono text-gray-800">
-                      {mascara}
-                    </code>
                   </div>
-                  <button
-                    onClick={handleAbrirModalMascara}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium self-start sm:self-auto sm:ml-4"
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.mascara ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Editar
-                  </button>
-                </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {secoesExpanded.mascara && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 mb-2">
+                          Formato atual: ex: 9.9.99.999
+                        </p>
+                        <code className="bg-gray-100 px-3 py-1.5 rounded border border-gray-300 text-sm font-mono text-gray-800">
+                          {mascara}
+                        </code>
+                      </div>
+                      <button
+                        onClick={handleAbrirModalMascara}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium self-start sm:self-auto sm:ml-4"
+                      >
+                        Editar
+                      </button>
+                    </div>
+                    {mensagemMascara && (
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                        <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                        {mensagemMascara}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Toggle: Permitir criar contas raiz */}
@@ -146,7 +215,11 @@ export default function Configuracoes() {
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={handleToggleContasRaiz}
+                  role="switch"
+                  aria-checked={permitirContasRaiz}
+                  aria-label="Permitir criar contas raiz sem validação"
                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors self-start sm:self-auto sm:ml-4 flex-shrink-0 ${
                     permitirContasRaiz ? 'bg-blue-600' : 'bg-gray-300'
                   }`}
@@ -219,6 +292,196 @@ export default function Configuracoes() {
                     ? 'Modo escuro ativado'
                     : 'Modo claro ativado'}
                 </p>
+              </div>
+            </div>
+
+            {/* Ícones de Categorias Section - Acordeão */}
+            <div className="border-b border-gray-200 pb-6">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setSecoesExpanded({ ...secoesExpanded, icones: !secoesExpanded.icones })}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                >
+                  <div className="flex-1">
+                    <div className="text-lg font-medium text-gray-800">
+                      Ícones de Categorias
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Personalize os ícones exibidos para cada categoria de conta
+                    </p>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.icones ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {secoesExpanded.icones && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSalvandoIcones(true);
+                          try {
+                            await salvarConfiguracoes({ iconesCategoria });
+                            setFeedback({ tipo: 'success', mensagem: 'Ícones salvos com sucesso' });
+                          } catch (e) {
+                            setFeedback({ tipo: 'error', mensagem: 'Erro ao salvar ícones' });
+                          } finally {
+                            setSalvandoIcones(false);
+                          }
+                        }}
+                        disabled={salvandoIcones}
+                        aria-busy={salvandoIcones}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
+                      >
+                        {salvandoIcones ? 'Salvando...' : 'Salvar Ícones'}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {categorias.map((cat) => (
+                        <div key={cat} className="p-4 bg-gray-50 rounded-lg">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <label className="text-sm font-medium text-gray-700 capitalize w-32">
+                              {cat}
+                            </label>
+                            <select
+                              value={
+                                iconesDisponiveis.find(([k, v]) => v.svg === iconesCategoria[cat])?.[0] ||
+                                'moeda'
+                              }
+                              onChange={(e) => {
+                                const iconeEscolhido = ICONES_DISPONIVEIS[e.target.value]?.svg || ICONES_PADRAO[cat];
+                                setIconesCategoria({ ...iconesCategoria, [cat]: iconeEscolhido });
+                              }}
+                              aria-label={`Selecionar ícone para ${cat}`}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
+                            >
+                              {iconesDisponiveis.map(([key, { nome, svg }]) => (
+                                <option key={key} value={key}>
+                                  {nome}
+                                </option>
+                              ))}
+                            </select>
+                            <div
+                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded bg-white"
+                              dangerouslySetInnerHTML={{ __html: iconesCategoria[cat] || ICONES_PADRAO[cat] }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Padrões Automáticos Section - Acordeão */}
+            <div className="border-b border-gray-200 pb-6">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setSecoesExpanded({ ...secoesExpanded, padroes: !secoesExpanded.padroes })}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                >
+                  <div className="flex-1">
+                    <div className="text-lg font-medium text-gray-800">
+                      Padrões Automáticos de Lançamento
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {autoPatterns.length} padrões configurados
+                    </p>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.padroes ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {secoesExpanded.padroes && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSalvandoPadroes(true);
+                          try {
+                            await salvarConfiguracoes({ autoPatterns });
+                            setFeedback({ tipo: 'success', mensagem: 'Padrões salvos com sucesso' });
+                          } catch (e) {
+                            setFeedback({ tipo: 'error', mensagem: 'Erro ao salvar padrões' });
+                          } finally {
+                            setSalvandoPadroes(false);
+                          }
+                        }}
+                        disabled={salvandoPadroes}
+                        aria-busy={salvandoPadroes}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
+                      >
+                        {salvandoPadroes ? 'Salvando...' : 'Salvar Padrões'}
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Defina regras para preencher automaticamente débito e crédito nos lançamentos.
+                    </p>
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                      ℹ️ Gerenciamento detalhado de padrões está disponível na página <strong>Lançamentos</strong> ao criar ou editar um lançamento.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bancos Section - Acordeão */}
+            <div>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setSecoesExpanded({ ...secoesExpanded, bancos: !secoesExpanded.bancos })}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                >
+                  <div className="flex-1">
+                    <div className="text-lg font-medium text-gray-800">
+                      Contas Bancárias para Importação
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {bancos.length} banco(s) configurado(s)
+                    </p>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.bancos ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {secoesExpanded.bancos && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Configure suas contas bancárias, regras de classificação inteligente e padrões de importação.
+                    </p>
+                    <a
+                      href="/configuracao-bancos"
+                      aria-label="Ir para página de configuração de bancos"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Gerenciar Bancos e Regras
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>
