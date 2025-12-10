@@ -127,276 +127,259 @@ export default function Configuracoes() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">
-            Configurações
-          </h2>
+        {feedback && (
+          <div
+            className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm shadow-sm border ${
+              feedback.tipo === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${feedback.tipo === 'success' ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span>{feedback.mensagem}</span>
+          </div>
+        )}
 
-          {feedback && (
-            <div
-              className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm shadow-sm border ${
-                feedback.tipo === 'success'
-                  ? 'bg-green-50 border-green-200 text-green-800'
-                  : 'bg-red-50 border-red-200 text-red-800'
-              }`}
+        {/* Configurações em Cascata */}
+        <div className="space-y-3">
+          {/* Máscara de Codificação - Acordeão */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <button
+              onClick={() => setSecoesExpanded({ ...secoesExpanded, mascara: !secoesExpanded.mascara })}
+              className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
             >
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${feedback.tipo === 'success' ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span>{feedback.mensagem}</span>
-            </div>
-          )}
-
-          {/* Plano de Contas Section */}
-          <div className="space-y-6">
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-lg font-medium text-gray-800 mb-4">
-                Plano de Contas
-              </h3>
-
-              {/* Máscara de Codificação - Acordeão */}
-              <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setSecoesExpanded({ ...secoesExpanded, mascara: !secoesExpanded.mascara })}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                >
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-700">
-                      Máscara de Codificação
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Define o formato dos códigos das contas
-                    </p>
-                  </div>
-                  <svg
-                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.mascara ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {secoesExpanded.mascara && (
-                  <div className="p-4 bg-white border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 mb-2">
-                          Formato atual: ex: 9.9.99.999
-                        </p>
-                        <code className="bg-gray-100 px-3 py-1.5 rounded border border-gray-300 text-sm font-mono text-gray-800">
-                          {mascara}
-                        </code>
-                      </div>
-                      <button
-                        onClick={handleAbrirModalMascara}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium self-start sm:self-auto sm:ml-4"
-                      >
-                        Editar
-                      </button>
-                    </div>
-                    {mensagemMascara && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-                        <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                        {mensagemMascara}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Toggle: Permitir criar contas raiz */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Permitir criar contas raiz sem validação
-                  </label>
-                  <p className="text-xs text-gray-500">
-                    Habilite para adicionar novas contas principais (como 3 RECEITAS) no Plano de Contas
-                  </p>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-700">
+                  📋 Máscara de Codificação
                 </div>
-                <button
-                  type="button"
-                  onClick={handleToggleContasRaiz}
-                  role="switch"
-                  aria-checked={permitirContasRaiz}
-                  aria-label="Permitir criar contas raiz sem validação"
-                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors self-start sm:self-auto sm:ml-4 flex-shrink-0 ${
-                    permitirContasRaiz ? 'bg-blue-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                      permitirContasRaiz ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Aparência Section */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-lg font-medium text-gray-800 mb-4">
-                Aparência
-              </h3>
-
-              {/* Tema */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Tema
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => setTema('light')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
-                      tema === 'light'
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    Claro
-                  </button>
-                  <button
-                    onClick={() => setTema('dark')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
-                      tema === 'dark'
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                    Escuro
-                  </button>
-                  <button
-                    onClick={() => setTema('system')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
-                      tema === 'system'
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Sistema
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  {tema === 'system' 
-                    ? 'Usando preferência do sistema operacional' 
-                    : tema === 'dark'
-                    ? 'Modo escuro ativado'
-                    : 'Modo claro ativado'}
+                <p className="text-xs text-gray-500 mt-1">
+                  Define o formato dos códigos das contas
                 </p>
               </div>
-            </div>
-
-            {/* Ícones de Categorias Section - Acordeão */}
-            <div className="border-b border-gray-200 pb-6">
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setSecoesExpanded({ ...secoesExpanded, icones: !secoesExpanded.icones })}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                >
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.mascara ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {secoesExpanded.mascara && (
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex-1">
-                    <div className="text-lg font-medium text-gray-800">
-                      Ícones de Categorias
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Personalize os ícones exibidos para cada categoria de conta
+                    <p className="text-xs text-gray-500 mb-2">
+                      Formato atual: ex: 9.9.99.999
                     </p>
+                    <code className="bg-gray-100 px-3 py-1.5 rounded border border-gray-300 text-sm font-mono text-gray-800">
+                      {mascara}
+                    </code>
                   </div>
-                  <svg
-                    className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.icones ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    onClick={handleAbrirModalMascara}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium self-start sm:self-auto"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {secoesExpanded.icones && (
-                  <div className="p-4 bg-white border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setSalvandoIcones(true);
-                          try {
-                            await salvarConfiguracoes({ iconesCategoria });
-                            setFeedback({ tipo: 'success', mensagem: 'Ícones salvos com sucesso' });
-                          } catch (e) {
-                            setFeedback({ tipo: 'error', mensagem: 'Erro ao salvar ícones' });
-                          } finally {
-                            setSalvandoIcones(false);
-                          }
-                        }}
-                        disabled={salvandoIcones}
-                        aria-busy={salvandoIcones}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
-                      >
-                        {salvandoIcones ? 'Salvando...' : 'Salvar Ícones'}
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {categorias.map((cat) => (
-                        <div key={cat} className="p-4 bg-gray-50 rounded-lg">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                            <label className="text-sm font-medium text-gray-700 capitalize w-32">
-                              {cat}
-                            </label>
-                            <select
-                              value={
-                                iconesDisponiveis.find(([k, v]) => v.svg === iconesCategoria[cat])?.[0] ||
-                                'moeda'
-                              }
-                              onChange={(e) => {
-                                const iconeEscolhido = ICONES_DISPONIVEIS[e.target.value]?.svg || ICONES_PADRAO[cat];
-                                setIconesCategoria({ ...iconesCategoria, [cat]: iconeEscolhido });
-                              }}
-                              aria-label={`Selecionar ícone para ${cat}`}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
-                            >
-                              {iconesDisponiveis.map(([key, { nome, svg }]) => (
-                                <option key={key} value={key}>
-                                  {nome}
-                                </option>
-                              ))}
-                            </select>
-                            <div
-                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded bg-white"
-                              dangerouslySetInnerHTML={{ __html: iconesCategoria[cat] || ICONES_PADRAO[cat] }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    Editar
+                  </button>
+                </div>
+                {mensagemMascara && (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    {mensagemMascara}
                   </div>
                 )}
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Padrões Automáticos Section - Acordeão */}
-            <div className="border-b border-gray-200 pb-6">
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {/* Toggle: Permitir criar contas raiz */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white hover:bg-gray-50 transition-colors">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  🏗️ Permitir criar contas raiz
+                </label>
+                <p className="text-xs text-gray-500">
+                  Adicione novas contas principais (como 3 RECEITAS) no Plano de Contas
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleContasRaiz}
+                role="switch"
+                aria-checked={permitirContasRaiz}
+                aria-label="Permitir criar contas raiz sem validação"
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors self-start sm:self-auto flex-shrink-0 ${
+                  permitirContasRaiz ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                    permitirContasRaiz ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Tema */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-4 bg-white">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                🎨 Tema
+              </label>
+              <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => setSecoesExpanded({ ...secoesExpanded, padroes: !secoesExpanded.padroes })}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  onClick={() => setTema('light')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                    tema === 'light'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
                 >
-                  <div className="flex-1">
-                    <div className="text-lg font-medium text-gray-800">
-                      Padrões Automáticos de Lançamento
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Claro
+                </button>
+                <button
+                  onClick={() => setTema('dark')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                    tema === 'dark'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                  Escuro
+                </button>
+                <button
+                  onClick={() => setTema('system')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                    tema === 'system'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Sistema
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                {tema === 'system' 
+                  ? 'Usando preferência do sistema operacional' 
+                  : tema === 'dark'
+                  ? 'Modo escuro ativado'
+                  : 'Modo claro ativado'}
+              </p>
+            </div>
+          </div>
+
+          {/* Ícones de Categorias Section - Acordeão */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <button
+              onClick={() => setSecoesExpanded({ ...secoesExpanded, icones: !secoesExpanded.icones })}
+              className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+            >
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-700">
+                  🎯 Ícones de Categorias
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Personalize os ícones das categorias de contas
+                </p>
+              </div>
+              <svg
+                className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.icones ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {secoesExpanded.icones && (
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSalvandoIcones(true);
+                      try {
+                        await salvarConfiguracoes({ iconesCategoria });
+                        setFeedback({ tipo: 'success', mensagem: 'Ícones salvos com sucesso' });
+                      } catch (e) {
+                        setFeedback({ tipo: 'error', mensagem: 'Erro ao salvar ícones' });
+                      } finally {
+                        setSalvandoIcones(false);
+                      }
+                    }}
+                    disabled={salvandoIcones}
+                    aria-busy={salvandoIcones}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium disabled:opacity-50 self-start sm:self-auto"
+                  >
+                    {salvandoIcones ? 'Salvando...' : 'Salvar Ícones'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {categorias.map((cat) => (
+                    <div key={cat} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <label className="text-sm font-medium text-gray-700 capitalize w-32">
+                          {cat}
+                        </label>
+                        <select
+                          value={
+                            iconesDisponiveis.find(([k, v]) => v.svg === iconesCategoria[cat])?.[0] ||
+                            'moeda'
+                          }
+                          onChange={(e) => {
+                            const iconeEscolhido = ICONES_DISPONIVEIS[e.target.value]?.svg || ICONES_PADRAO[cat];
+                            setIconesCategoria({ ...iconesCategoria, [cat]: iconeEscolhido });
+                          }}
+                          aria-label={`Selecionar ícone para ${cat}`}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
+                        >
+                          {iconesDisponiveis.map(([key, { nome, svg }]) => (
+                            <option key={key} value={key}>
+                              {nome}
+                            </option>
+                          ))}
+                        </select>
+                        <div
+                          className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded bg-white"
+                          dangerouslySetInnerHTML={{ __html: iconesCategoria[cat] || ICONES_PADRAO[cat] }}
+                        />
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {autoPatterns.length} padrões configurados
-                    </p>
-                  </div>
-                  <svg
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Padrões Automáticos Section - Acordeão */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <button
+              onClick={() => setSecoesExpanded({ ...secoesExpanded, padroes: !secoesExpanded.padroes })}
+              className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+            >
+              <div className="flex-1">
+                <div className="text-sm font-medium text-gray-700">
+                  ⚙️ Padrões Automáticos
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {autoPatterns.length} padrões configurados
+                </p>
+              </div>
+              <svg
                     className={`w-5 h-5 text-gray-500 transition-transform ${secoesExpanded.padroes ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
@@ -484,8 +467,6 @@ export default function Configuracoes() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
       </main>
 
       {/* Modal Editar Máscara */}
