@@ -105,7 +105,7 @@ export default function ConfiguracaoBancos() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <FilterBar
           compact={modoCompacto}
-          topClassName="top-12"
+          topClassName="top-0 md:top-[65px]"
           primary={
             <div className="flex items-center justify-between gap-3">
               <div>

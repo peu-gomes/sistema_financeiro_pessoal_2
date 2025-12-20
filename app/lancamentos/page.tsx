@@ -1184,7 +1184,7 @@ export default function Lancamentos() {
       <main className="max-w-7xl mx-auto px-2 md:px-4 py-4 md:py-8">
         <FilterBar
           compact={modoCompacto}
-          topClassName="top-12"
+          topClassName="top-0 md:top-[65px]"
           primary={
             <div className="relative">
               <input
@@ -1251,6 +1251,52 @@ export default function Lancamentos() {
                 className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
               >
                 + Novo
+              </button>
+            </div>
+          }
+          secondaryMini={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFiltrosVisiveis(!filtrosVisiveis)}
+                className={`flex-1 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                  filtrosAtivos
+                    ? 'border-blue-600 bg-blue-50 text-blue-600'
+                    : 'border-gray-300 text-gray-700'
+                }`}
+                title="Filtros"
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                  <span className="hidden xs:inline">Filtros</span>
+                  {filtrosAtivos && <span className="font-semibold">({totalFiltrados})</span>}
+                </span>
+              </button>
+
+              <select
+                value={ordenacao}
+                onChange={(e) => setOrdenacao(e.target.value as any)}
+                className="flex-1 px-2 md:px-3 py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                title="Ordenação"
+              >
+                <option value="data-desc">Mais recentes</option>
+                <option value="data-asc">Mais antigos</option>
+                <option value="valor-desc">Maior valor</option>
+                <option value="valor-asc">Menor valor</option>
+              </select>
+
+              <button
+                onClick={() => setModalAberto(true)}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
+                title="Novo lançamento"
+              >
+                +
               </button>
             </div>
           }

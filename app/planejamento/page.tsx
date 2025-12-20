@@ -282,7 +282,7 @@ export default function Planejamento() {
       >
         <FilterBar
           compact={modoCompacto}
-          topClassName="top-12"
+          topClassName="top-0 md:top-[65px]"
           primary={
             <div className="space-y-3">
               <div className="border-b border-gray-200">
@@ -394,6 +394,46 @@ export default function Planejamento() {
                   title="Próximo mês"
                 >
                   <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            ) : undefined
+          }
+          secondaryMini={
+            tipoAtivo === 'mensal' ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMesAnterior}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                  title="Mês anterior"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <div className="flex-1 text-center">
+                  <div className="text-sm font-semibold text-gray-800">
+                    {getNomeMes(mesAtual)} / {anoAtual}
+                  </div>
+                  {!orcamentoMensal && (
+                    <button
+                      onClick={handleCriarOrcamentoMensalDoFixo}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      title="Criar orçamento baseado no fixo"
+                    >
+                      Criar do fixo
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleMesProximo}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                  title="Próximo mês"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>

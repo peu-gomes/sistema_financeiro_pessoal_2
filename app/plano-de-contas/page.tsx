@@ -1613,7 +1613,7 @@ export default function PlanoDeContas() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <FilterBar
           compact={modoCompacto}
-          topClassName="top-[65px]"
+          topClassName="top-0 md:top-[65px]"
           primary={
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -1669,6 +1669,65 @@ export default function PlanoDeContas() {
             </div>
           }
           secondary={
+            <div className="flex flex-nowrap gap-2 overflow-x-auto">
+              <button
+                onClick={() => setFiltroCategoria('todos')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
+                  filtroCategoria === 'todos'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <div className="rounded-full bg-current w-2 h-2" />
+                Todos
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'ativo' ? 'todos' : 'ativo')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
+                  filtroCategoria === 'ativo'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-blue-600 hover:bg-blue-50 border border-gray-300'
+                }`}
+              >
+                <IconeCategoria categoria="ativo" iconesCustomizados={iconesCategoria} />
+                Ativo
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'passivo' ? 'todos' : 'passivo')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
+                  filtroCategoria === 'passivo'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'bg-white text-red-600 hover:bg-red-50 border border-gray-300'
+                }`}
+              >
+                <IconeCategoria categoria="passivo" iconesCustomizados={iconesCategoria} />
+                Passivo
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'receita' ? 'todos' : 'receita')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
+                  filtroCategoria === 'receita'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-white text-emerald-600 hover:bg-emerald-50 border border-gray-300'
+                }`}
+              >
+                <IconeCategoria categoria="receita" iconesCustomizados={iconesCategoria} />
+                Receita
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'despesa' ? 'todos' : 'despesa')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
+                  filtroCategoria === 'despesa'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-white text-orange-600 hover:bg-orange-50 border border-gray-300'
+                }`}
+              >
+                <IconeCategoria categoria="despesa" iconesCustomizados={iconesCategoria} />
+                Despesa
+              </button>
+            </div>
+          }
+          secondaryMini={
             <div className="flex flex-nowrap gap-2 overflow-x-auto">
               <button
                 onClick={() => setFiltroCategoria('todos')}
