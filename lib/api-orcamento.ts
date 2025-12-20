@@ -52,7 +52,7 @@ export function calcularValorAnual(valor: number, periodicidade: string): number
 
 export async function getOrcamentos(): Promise<Orcamento[]> {
   try {
-    const response = await fetch('/data/orcamentos.json');
+    const response = await fetch('/api/orcamentos', { cache: 'no-store' });
     if (!response.ok) throw new Error('Erro ao buscar orçamentos');
     return await response.json();
   } catch (error) {

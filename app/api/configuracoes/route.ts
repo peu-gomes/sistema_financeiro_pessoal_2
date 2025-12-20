@@ -1,28 +1,49 @@
-import { NextResponse } from 'next/server';
-import { writeFile, readFile } from 'fs/promises';
-import path from 'path';
+import { NextResponse } from 'next/server'
+import { getOrSeed, setJSON, KV_KEYS } from '@/lib/kv'
 
-const configPath = path.join(process.cwd(), 'public', 'data', 'configuracoes.json');
-
-async function readConfiguracoes() {
-  const content = await readFile(configPath, 'utf-8');
-  return JSON.parse(content);
+type Configuracoes = {
+  id: string
+  permitirCriarContasRaiz: boolean
+  tema?: 'light' | 'dark' | 'system'
+  iconesCategoria?: {
+    ativo?: string
+    passivo?: string
+    patrimonio?: string
+    receita?: string
+    despesa?: string
+  }
+  autoPatterns?: any[]
+  contasBancarias?: any[]
 }
 
-async function writeConfiguracoes(data: any) {
-  await writeFile(configPath, JSON.stringify(data, null, 2), 'utf-8');
+const DEFAULT_CONFIG: Configuracoes = {
+  id: 'config',
+  permitirCriarContasRaiz: false,
+  autoPatterns: [],
+  contasBancarias: [],
+}
+
+export async function GET() {
+  try {
+    const config = await getOrSeed<Configuracoes>(
+      KV_KEYS.configuracoes,
+      'data/configuracoes.json',
+      DEFAULT_CONFIG
+    )
+    return NextResponse.json(config)
+  } catch (error) {
+    console.error('Erro ao buscar configurações:', error)
+    return NextResponse.json({ error: 'Erro ao buscar configurações' }, { status: 500 })
+  }
 }
 
 export async function PUT(request: Request) {
   try {
-    const config = await request.json();
-    await writeConfiguracoes(config);
-    return NextResponse.json(config);
+    const config = (await request.json()) as Configuracoes
+    await setJSON(KV_KEYS.configuracoes, config)
+    return NextResponse.json(config)
   } catch (error) {
-    console.error('Erro ao salvar configurações:', error);
-    return NextResponse.json(
-      { error: 'Erro ao salvar configurações' },
-      { status: 500 }
-    );
+    console.error('Erro ao salvar configurações:', error)
+    return NextResponse.json({ error: 'Erro ao salvar configurações' }, { status: 500 })
   }
 }

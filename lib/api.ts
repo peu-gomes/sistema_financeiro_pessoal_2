@@ -100,10 +100,10 @@ export interface Partida {
 
 export async function getContas(): Promise<ContaBancaria[]> {
   try {
-    const response = await fetch('/data/plano-de-contas.json');
+    const response = await fetch('/api/contas', { cache: 'no-store' });
     if (!response.ok) throw new Error('Erro ao buscar plano de contas');
     const data = await response.json();
-    return data.contas || data; // Suporta formato com ou sem chave "contas"
+    return Array.isArray(data) ? data : (data?.contas || []);
   } catch (error) {
     console.error('Erro ao buscar contas:', error);
     throw error;
@@ -128,7 +128,7 @@ export async function saveContas(contas: ContaBancaria[]): Promise<void> {
 
 export async function getLancamentos(): Promise<Lancamento[]> {
   try {
-    const response = await fetch('/data/lancamentos.json');
+    const response = await fetch('/api/lancamentos', { cache: 'no-store' });
     if (!response.ok) throw new Error('Erro ao buscar lançamentos');
     return await response.json();
   } catch (error) {
@@ -201,16 +201,8 @@ export async function importLancamentos(lancamentos: Omit<Lancamento, 'id'>[]): 
 
 export async function getConfiguracoes(): Promise<Configuracoes> {
   try {
-    const response = await fetch('/data/configuracoes.json', {
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
-    if (!response.ok) {
-      console.error('Status:', response.status, response.statusText);
-      throw new Error(`Erro ao buscar configurações: ${response.status}`);
-    }
+    const response = await fetch('/api/configuracoes', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Erro ao buscar configurações: ${response.status}`);
     const data = await response.json();
     return data;
   } catch (error) {

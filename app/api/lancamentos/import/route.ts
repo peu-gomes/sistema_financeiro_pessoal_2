@@ -1,43 +1,53 @@
-import { NextResponse } from 'next/server';
-import { writeFile, readFile } from 'fs/promises';
-import path from 'path';
+import { NextResponse } from 'next/server'
+import { getOrSeed, setJSON, KV_KEYS } from '@/lib/kv'
 
-const lancamentosPath = path.join(process.cwd(), 'public', 'data', 'lancamentos.json');
-
-async function readLancamentos() {
-  const content = await readFile(lancamentosPath, 'utf-8');
-  return JSON.parse(content);
+type Partida = {
+  id: string
+  contaCodigo: string
+  contaNome: string
+  natureza: 'debito' | 'credito'
+  valor: number
 }
 
-async function writeLancamentos(data: any) {
-  await writeFile(lancamentosPath, JSON.stringify(data, null, 2), 'utf-8');
+type Lancamento = {
+  id: string
+  data: string
+  historico: string
+  documento?: string
+  partidas: Partida[]
+  criadoEm: string
+  atualizadoEm?: string
+}
+
+async function readLancamentos(): Promise<Lancamento[]> {
+  const data = await getOrSeed<Lancamento[]>(KV_KEYS.lancamentos, 'data/lancamentos.json', [])
+  return Array.isArray(data) ? data : []
+}
+
+async function writeLancamentos(data: Lancamento[]) {
+  await setJSON<Lancamento[]>(KV_KEYS.lancamentos, data)
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const lancamentosImportados = Array.isArray(body?.lancamentos) ? body.lancamentos : [];
-
+    const body = await request.json()
+    const lancamentosImportados: Partial<Lancamento>[] = Array.isArray(body?.lancamentos) ? body.lancamentos : []
     if (lancamentosImportados.length === 0) {
-      return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 });
+      return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 })
     }
-
-    const lancamentos = await readLancamentos();
-    const agora = Date.now();
-
-    const normalizados = lancamentosImportados.map((l: any, idx: number) => ({
-      ...l,
+    const lancamentos = await readLancamentos()
+    const agora = Date.now()
+    const normalizados: Lancamento[] = lancamentosImportados.map((l, idx) => ({
+      ...(l as any),
       id: l.id || `${agora}-${idx}`,
-      criadoEm: l.criadoEm || new Date().toISOString(),
-      atualizadoEm: l.atualizadoEm || new Date().toISOString(),
-    }));
-
-    lancamentos.push(...normalizados);
-    await writeLancamentos(lancamentos);
-
-    return NextResponse.json({ inseridos: normalizados.length });
+      criadoEm: l?.criadoEm || new Date().toISOString(),
+      atualizadoEm: l?.atualizadoEm || new Date().toISOString(),
+    })) as Lancamento[]
+    lancamentos.push(...normalizados)
+    await writeLancamentos(lancamentos)
+    return NextResponse.json({ inseridos: normalizados.length })
   } catch (error) {
-    console.error('Erro ao importar lançamentos:', error);
-    return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
+    console.error('Erro ao importar lançamentos:', error)
+    return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 })
   }
 }
