@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
 import { getLancamentos, createLancamento, deleteLancamento, getContas, getConfiguracoes, importLancamentos, type Lancamento as LancamentoAPI, type ContaBancaria as ContaBancariaAPI, type AutoPatternConfig } from '@/lib/api';
 import { obterInformacoesPadrao, obterCorPadrao, type TipoOperacao } from '@/lib/padroes-contabeis';
 
@@ -557,6 +559,7 @@ function ModalLancamento({ isOpen, onClose, onSalvar, contasAnaliticas, lancamen
 
 export default function Lancamentos() {
   const [mounted, setMounted] = useState(false);
+  const modoCompacto = useScrollCompact(150);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [lancamentoEmEdicao, setLancamentoEmEdicao] = useState<Lancamento | null>(null);
@@ -1179,11 +1182,11 @@ export default function Lancamentos() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-2 md:px-4 py-4 md:py-8">
-        <div className="bg-white rounded-lg shadow">
-          {/* Barra de Ações e Filtros - Compacta para Mobile */}
-          <div className="p-3 md:p-4 border-b border-gray-200">
-            {/* Linha 1: Busca */}
-            <div className="relative mb-2">
+        <FilterBar
+          compact={modoCompacto}
+          topClassName="top-12"
+          primary={
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Buscar..."
@@ -1191,24 +1194,34 @@ export default function Lancamentos() {
                 onChange={(e) => setFiltroTexto(e.target.value)}
                 className="w-full px-3 md:px-4 py-2 pl-9 md:pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
-              <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-400 absolute left-2.5 md:left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-4 h-4 md:w-5 md:h-5 text-gray-400 absolute left-2.5 md:left-3 top-2.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-
-            {/* Linha 2: Filtros, Ordenação e Novo */}
+          }
+          secondary={
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFiltrosVisiveis(!filtrosVisiveis)}
                 className={`flex-1 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                  filtrosAtivos 
-                    ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                  filtrosAtivos
+                    ? 'border-blue-600 bg-blue-50 text-blue-600'
                     : 'border-gray-300 text-gray-700'
                 }`}
               >
                 <span className="flex items-center justify-center gap-1.5">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
                   </svg>
                   <span className="hidden xs:inline">Filtros</span>
                   {filtrosAtivos && <span className="font-semibold">({totalFiltrados})</span>}
@@ -1240,10 +1253,14 @@ export default function Lancamentos() {
                 + Novo
               </button>
             </div>
+          }
+        />
 
-            {/* Painel de Filtros Avançados - Compacto */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-3 md:p-4 border-b border-gray-200">
+            {/* Painel de Filtros Avançados */}
             {filtrosVisiveis && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
                 {/* Período em linha no mobile */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>

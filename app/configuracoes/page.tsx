@@ -5,9 +5,12 @@ import { ICONES_DISPONIVEIS, ICONES_PADRAO, type TipoCategoria } from '@/lib/ico
 import { validarMascara } from '@/lib/maskUtils';
 import { useTheme } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
 import { useConfiguracoesData } from './hooks/useConfiguracoes';
 
 export default function Configuracoes() {
+  const modoCompacto = useScrollCompact(150);
   const { tema, setTema } = useTheme();
   const {
     permitirContasRaiz,
@@ -127,6 +130,27 @@ export default function Configuracoes() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <FilterBar
+          compact={modoCompacto}
+          topClassName="top-12"
+          primary={
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className={`font-semibold text-gray-800 ${modoCompacto ? 'text-base' : 'text-lg'}`}>Configurações</div>
+                {!modoCompacto && (
+                  <div className="text-sm text-gray-600">Ajustes gerais do sistema</div>
+                )}
+              </div>
+              <button
+                onClick={recarregar}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Recarregar
+              </button>
+            </div>
+          }
+        />
+
         {feedback && (
           <div
             className={`mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm shadow-sm border ${

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
 import { getLancamentos, type Lancamento } from '@/lib/api';
 import { getOrcamentos, calcularValorMensal, type Orcamento } from '@/lib/api-orcamento';
 
 export default function Home() {
+  const modoCompacto = useScrollCompact(150);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [naoClassificados, setNaoClassificados] = useState(0);
   const [precisamRevisao, setPrecisamRevisao] = useState(0);
@@ -227,6 +230,27 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
+        <FilterBar
+          compact={modoCompacto}
+          topClassName="top-12"
+          primary={
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className={`font-semibold text-gray-800 ${modoCompacto ? 'text-base' : 'text-lg'}`}>Dashboard</div>
+                {!modoCompacto && (
+                  <div className="text-sm text-gray-600">Resumo das suas finanças</div>
+                )}
+              </div>
+              <a
+                href="/lancamentos"
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Ver lançamentos
+              </a>
+            </div>
+          }
+        />
+
         {/* Saudação com Perfil */}
         <div className="mb-6 flex items-center justify-between">
           <div>

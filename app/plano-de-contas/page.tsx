@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import FilterBar from '@/components/FilterBar';
+import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
 import { 
   validarCodigo, 
   gerarProximoCodigo, 
@@ -1118,7 +1120,7 @@ export default function PlanoDeContas() {
   const [previewSelecionado, setPreviewSelecionado] = useState<PreviewIA | null>(null);
   const [previewConta, setPreviewConta] = useState<{ node: ContaComPreview; parentId: string } | null>(null);
   const [iconesCategoria, setIconesCategoria] = useState<Record<string, string>>({});
-  const [modoCompacto, setModoCompacto] = useState(false);
+  const modoCompacto = useScrollCompact(150);
 
   const handleSelecionarSugestao = (id: string | null) => {
     if (!id) {
@@ -1183,16 +1185,6 @@ export default function PlanoDeContas() {
     };
 
     carregarDados();
-  }, []);
-
-  // Listener de scroll para modo compacto
-  useEffect(() => {
-    const handleScroll = () => {
-      setModoCompacto(window.scrollY > 150);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Salvar contas na API quando houver mudanças
@@ -1619,138 +1611,123 @@ export default function PlanoDeContas() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header com busca e filtros - Sticky com modo compacto */}
-        <div className={`mb-6 bg-white rounded-lg shadow sticky top-[65px] z-20 transition-all duration-300 ${
-          modoCompacto ? 'shadow-md' : ''
-        }`}>
-          {/* Botão Nova Conta Raiz e Busca */}
-          <div className={`border-b border-gray-200 transition-all duration-300 ${
-            modoCompacto ? 'p-3' : 'p-6'
-          }`}>
-            <div className={`flex items-center gap-3 transition-all ${
-              modoCompacto ? 'mb-2' : 'mb-4'
-            }`}>
-              {mounted && permitirContasRaiz && (
-                <button
-                  onClick={() => setModalCriarContaRaizAberto(true)}
-                  className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium flex items-center gap-2 whitespace-nowrap ${
-                    modoCompacto ? 'px-3 py-1.5' : 'px-4 py-2'
-                  }`}
-                  title="Criar nova conta raiz"
-                >
-                  <svg className={`transition-all ${
-                    modoCompacto ? 'w-3.5 h-3.5' : 'w-4 h-4'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {!modoCompacto && 'Nova Conta Raiz'}
-                </button>
-              )}
-              <div className="flex-1"></div>
-            </div>
-            
-            {/* Campo de Busca - Compacto quando scrolling */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={modoCompacto ? "Buscar..." : "Buscar por nome ou código..."}
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400 transition-all ${
-                  modoCompacto ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
-                }`}
-              />
-              {busca && (
-                <button
-                  onClick={() => setBusca('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  title="Limpar busca"
-                >
-                  <svg className={`transition-all ${
-                    modoCompacto ? 'w-4 h-4' : 'w-5 h-5'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
+        <FilterBar
+          compact={modoCompacto}
+          topClassName="top-[65px]"
+          primary={
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                {mounted && permitirContasRaiz && (
+                  <button
+                    onClick={() => setModalCriarContaRaizAberto(true)}
+                    className={`bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium flex items-center gap-2 whitespace-nowrap ${
+                      modoCompacto ? 'px-3 py-1.5' : 'px-4 py-2'
+                    }`}
+                    title="Criar nova conta raiz"
+                  >
+                    <svg
+                      className={`transition-all ${modoCompacto ? 'w-3.5 h-3.5' : 'w-4 h-4'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    {!modoCompacto && 'Nova Conta Raiz'}
+                  </button>
+                )}
+                <div className="flex-1" />
+              </div>
 
-          {/* Filtros rápidos - Compactos quando scrolling */}
-          <div className={`bg-gray-50 border-t border-gray-200 transition-all duration-300 overflow-x-auto ${
-            modoCompacto ? 'px-3 py-2' : 'px-6 py-3'
-          }`}>
-            <div className="flex flex-nowrap gap-2 min-w-max md:min-w-0">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={modoCompacto ? 'Buscar...' : 'Buscar por nome ou código...'}
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className={`w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400 transition-all ${
+                    modoCompacto ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'
+                  }`}
+                />
+                {busca && (
+                  <button
+                    onClick={() => setBusca('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    title="Limpar busca"
+                  >
+                    <svg
+                      className={`transition-all ${modoCompacto ? 'w-4 h-4' : 'w-5 h-5'}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          }
+          secondary={
+            <div className="flex flex-nowrap gap-2 overflow-x-auto">
               <button
-                onClick={() => setFiltroCategoria(filtroCategoria === 'todos' ? 'todos' : 'todos')}
-                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-                } ${
+                onClick={() => setFiltroCategoria('todos')}
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
                   filtroCategoria === 'todos'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
                 }`}
               >
-                <div className={`rounded-full bg-current transition-all ${
-                  modoCompacto ? 'w-1.5 h-1.5' : 'w-2 h-2'
-                }`}></div>
-                {modoCompacto ? 'Todos' : 'Todos'}
+                <div className="rounded-full bg-current w-2 h-2" />
+                Todos
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'ativo' ? 'todos' : 'ativo')}
-                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-                } ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
                   filtroCategoria === 'ativo'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-white text-blue-600 hover:bg-blue-50 border border-gray-300'
                 }`}
               >
                 <IconeCategoria categoria="ativo" iconesCustomizados={iconesCategoria} />
-                {!modoCompacto && 'Ativo'}
+                Ativo
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'passivo' ? 'todos' : 'passivo')}
-                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-                } ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
                   filtroCategoria === 'passivo'
                     ? 'bg-red-600 text-white shadow-sm'
                     : 'bg-white text-red-600 hover:bg-red-50 border border-gray-300'
                 }`}
               >
                 <IconeCategoria categoria="passivo" iconesCustomizados={iconesCategoria} />
-                {!modoCompacto && 'Passivo'}
+                Passivo
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'receita' ? 'todos' : 'receita')}
-                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-                } ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
                   filtroCategoria === 'receita'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'bg-white text-emerald-600 hover:bg-emerald-50 border border-gray-300'
                 }`}
               >
                 <IconeCategoria categoria="receita" iconesCustomizados={iconesCategoria} />
-                {!modoCompacto && 'Receita'}
+                Receita
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'despesa' ? 'todos' : 'despesa')}
-                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap ${
-                  modoCompacto ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-                } ${
+                className={`flex items-center gap-2 rounded-lg font-medium transition-all whitespace-nowrap px-3 py-1.5 text-sm ${
                   filtroCategoria === 'despesa'
                     ? 'bg-orange-600 text-white shadow-sm'
                     : 'bg-white text-orange-600 hover:bg-orange-50 border border-gray-300'
                 }`}
               >
                 <IconeCategoria categoria="despesa" iconesCustomizados={iconesCategoria} />
-                {!modoCompacto && 'Despesa'}
+                Despesa
               </button>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Árvore */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
