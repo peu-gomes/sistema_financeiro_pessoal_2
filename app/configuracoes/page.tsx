@@ -272,11 +272,11 @@ export default function Configuracoes() {
                   onClick={() => setTema('dark')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm ${
                     tema === 'dark'
-                      ? 'bg-gray-800 text-white border-2 border-gray-900 shadow-md'
+                      ? 'bg-slate-900 text-white border-2 border-slate-950 shadow-md'
                       : 'border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-md'
                   }`}
                 >
-                  <svg className={`w-5 h-5 ${tema === 'dark' ? 'text-indigo-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 ${tema === 'dark' ? 'text-blue-200' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                   Escuro
