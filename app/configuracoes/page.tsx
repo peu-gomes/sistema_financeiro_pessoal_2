@@ -257,39 +257,39 @@ export default function Configuracoes() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setTema('light')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm ${
                     tema === 'light'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'bg-blue-600 text-white border-2 border-blue-700 shadow-md'
+                      : 'border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 ${tema === 'light' ? 'text-yellow-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                   Claro
                 </button>
                 <button
                   onClick={() => setTema('dark')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm ${
                     tema === 'dark'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'bg-gray-800 text-white border-2 border-gray-900 shadow-md'
+                      : 'border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 ${tema === 'dark' ? 'text-indigo-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                   Escuro
                 </button>
                 <button
                   onClick={() => setTema('system')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm ${
                     tema === 'system'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'bg-purple-600 text-white border-2 border-purple-700 shadow-md'
+                      : 'border-2 border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:shadow-md'
                   }`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 ${tema === 'system' ? 'text-purple-200' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   Sistema
