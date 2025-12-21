@@ -809,10 +809,11 @@ export default function Lancamentos() {
     bancoConta: ContaBancariaImportacao,
     layoutEscolhido: CsvLayoutConfig
   ) => {
-    const registros = parseExtratoCSVComLayout(texto, layoutEscolhido);
+    try {
+      const registros = parseExtratoCSVComLayout(texto, layoutEscolhido);
 
-    // Aplica classificação automática e sugestões de IA
-    const registrosComSugestoes = registros.map((reg) => {
+      // Aplica classificação automática e sugestões de IA
+      const registrosComSugestoes = registros.map((reg) => {
       // 1. Tenta classificação por regras
       const classificacaoRegra = classificarTransacaoAutomatica(reg.historico, reg.tipo, bancoConta);
 
@@ -856,17 +857,23 @@ export default function Lancamentos() {
       return reg;
     });
 
-    // Adiciona campos de conferência e IDs estáveis por ordem
-    const agora = Date.now();
-    const registrosComCampos = registrosComSugestoes.map((r, idx) => ({
-      id: `${agora}-${idx}`,
-      selecionado: true,
-      ignorar: false,
-      ...r,
-    }));
+      // Adiciona campos de conferência e IDs estáveis por ordem
+      const agora = Date.now();
+      const registrosComCampos = registrosComSugestoes.map((r, idx) => ({
+        id: `${agora}-${idx}`,
+        selecionado: true,
+        ignorar: false,
+        ...r,
+      }));
 
-    setImportPreview(registrosComCampos);
-    setImportResumo({ sucesso: registrosComCampos.length, erros: registrosComCampos.length === 0 ? 1 : 0 });
+      setImportPreview(registrosComCampos);
+      setImportResumo({ sucesso: registrosComCampos.length, erros: registrosComCampos.length === 0 ? 1 : 0 });
+    } catch (error) {
+      console.error('Erro ao gerar preview de importação:', error);
+      setImportErro('Falha ao ler o arquivo ou cabeçalho. Verifique o layout em “Configuração de Bancos”.');
+      setImportPreview([]);
+      setImportResumo({ sucesso: 0, erros: 1 });
+    }
   };
 
   // ===== Conferência: helpers de seleção, aplicação e regras =====
@@ -958,6 +965,7 @@ export default function Lancamentos() {
     setImportPreview([]);
     setImportResumo({ sucesso: 0, erros: 0 });
     setImportOpcoesDetectadas([]);
+    setImportPaginaAtual(1);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const texto = (e.target?.result as string) || '';
