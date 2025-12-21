@@ -1,18 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { getConfiguracoes } from '@/lib/api';
-import type { ContaBancariaImportacao, RegraClassificacao } from '@/lib/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { ContaBancariaImportacao, RegraClassificacao, CsvCampoPadrao, CsvLayoutConfig } from '@/lib/api';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
+import { useConfiguracoesData } from '@/app/configuracoes/hooks/useConfiguracoes';
 
 export default function ConfiguracaoBancos() {
   const modoCompacto = useScrollCompact(150);
-  const [bancos, setBancos] = useState<ContaBancariaImportacao[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [bancoSelecionado, setBancoSelecionado] = useState<ContaBancariaImportacao | null>(null);
-  const [modalAberto, setModalAberto] = useState(false);
+  const { bancos, contasAnaliticas, loading, erro, salvarBancos, recarregar } = useConfiguracoesData();
+
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
+  const bancoSelecionado = useMemo(
+    () => (selecionadoId ? bancos.find((b) => b.id === selecionadoId) || null : null),
+    [bancos, selecionadoId],
+  );
+
+  const [draft, setDraft] = useState<ContaBancariaImportacao | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [salvando, setSalvando] = useState(false);
   const [modalRegra, setModalRegra] = useState(false);
   const [novaRegra, setNovaRegra] = useState<Partial<RegraClassificacao>>({
     palavrasChave: [],
@@ -22,17 +29,123 @@ export default function ConfiguracaoBancos() {
   const [novaPalavra, setNovaPalavra] = useState('');
 
   useEffect(() => {
-    carregarBancos();
-  }, []);
+    if (!selecionadoId && bancos.length > 0) {
+      setSelecionadoId(bancos[0].id);
+    }
+  }, [bancos, selecionadoId]);
 
-  const carregarBancos = async () => {
+  useEffect(() => {
+    if (!bancoSelecionado) {
+      setDraft(null);
+      setDirty(false);
+      return;
+    }
+    setDraft(JSON.parse(JSON.stringify(bancoSelecionado)) as ContaBancariaImportacao);
+    setDirty(false);
+  }, [bancoSelecionado]);
+
+  const camposCsv: CsvCampoPadrao[] = ['data', 'historico', 'valor', 'identificador', 'tipo'];
+  const camposObrigatoriosBase: Array<Exclude<CsvCampoPadrao, 'tipo'>> = ['data', 'historico', 'valor'];
+
+  const normalizarLista = (raw: string) =>
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const atualizarDraft = (patch: Partial<ContaBancariaImportacao>) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      setDirty(true);
+      return { ...prev, ...patch };
+    });
+  };
+
+  const handleCriarConta = () => {
+    const id = `banco-${Date.now()}`;
+    const novo: ContaBancariaImportacao = {
+      id,
+      nome: 'Nova conta de importação',
+      contaCodigo: '',
+      contaNome: '',
+      ativa: true,
+      padrao: false,
+      contaPadraoReceita: '',
+      contaPadraoDespesa: '',
+      layoutsCsv: [
+        {
+          id: `csv-${Date.now()}`,
+          nome: 'Layout CSV',
+          camposObrigatorios: [...camposObrigatoriosBase],
+          aliases: {
+            data: ['data'],
+            historico: ['descricao', 'descrição'],
+            valor: ['valor'],
+          },
+        },
+      ],
+      regrasClassificacao: [],
+    };
+    const atualizados = [novo, ...bancos];
+    setSelecionadoId(id);
+    setDraft(novo);
+    setDirty(true);
+    void salvarBancos(atualizados);
+  };
+
+  const handleSalvar = async () => {
+    if (!draft) return;
+    if (!draft.nome?.trim()) {
+      alert('Informe o nome.');
+      return;
+    }
+    if (!draft.contaCodigo?.trim()) {
+      alert('Selecione a conta do plano de contas.');
+      return;
+    }
+
+    const layoutsCsv = (draft.layoutsCsv || []).map((l) => {
+      const obrigatorios = (l.camposObrigatorios || []).filter(Boolean);
+      const normalizados = obrigatorios.length ? obrigatorios : [...camposObrigatoriosBase];
+      return { ...l, camposObrigatorios: Array.from(new Set(normalizados)) };
+    });
+
+    const draftNormalizado: ContaBancariaImportacao = {
+      ...draft,
+      layoutsCsv,
+      regrasClassificacao: draft.regrasClassificacao || [],
+    };
+
+    const atualizados = bancos.map((b) => (b.id === draftNormalizado.id ? draftNormalizado : b));
+    const finalBancos = draftNormalizado.padrao
+      ? atualizados.map((b) => (b.id === draftNormalizado.id ? b : { ...b, padrao: false }))
+      : atualizados;
+
     try {
-      const config = await getConfiguracoes();
-      setBancos(config.contasBancarias || []);
-      setCarregando(false);
-    } catch (error) {
-      console.error('Erro ao carregar bancos:', error);
-      setCarregando(false);
+      setSalvando(true);
+      await salvarBancos(finalBancos);
+      setDirty(false);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao salvar bancos.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleExcluir = async () => {
+    if (!draft) return;
+    if (!confirm('Remover esta conta de importação?')) return;
+    const atualizados = bancos.filter((b) => b.id !== draft.id);
+    try {
+      setSalvando(true);
+      await salvarBancos(atualizados);
+      setSelecionadoId(atualizados[0]?.id || null);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao remover banco.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -54,12 +167,12 @@ export default function ConfiguracaoBancos() {
   };
 
   const handleSalvarRegra = () => {
-    if (!bancoSelecionado || !novaRegra.contaDestino) {
+    if (!draft || !novaRegra.contaDestino) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
 
-    const regras = [...(bancoSelecionado.regrasClassificacao || [])];
+    const regras = [...(draft.regrasClassificacao || [])];
     const regra: RegraClassificacao = {
       id: `regra-${Date.now()}`,
       palavrasChave: novaRegra.palavrasChave || [],
@@ -70,21 +183,16 @@ export default function ConfiguracaoBancos() {
     };
     regras.push(regra);
 
-    setBancoSelecionado({
-      ...bancoSelecionado,
-      regrasClassificacao: regras
-    });
+    atualizarDraft({ regrasClassificacao: regras });
 
     setModalRegra(false);
     setNovaRegra({ palavrasChave: [], ativo: true, prioridade: 1 });
   };
 
   const handleRemoverRegra = (idRegra: string) => {
-    if (!bancoSelecionado) return;
-    
-    setBancoSelecionado({
-      ...bancoSelecionado,
-      regrasClassificacao: (bancoSelecionado.regrasClassificacao || []).filter(r => r.id !== idRegra)
+    if (!draft) return;
+    atualizarDraft({
+      regrasClassificacao: (draft.regrasClassificacao || []).filter((r) => r.id !== idRegra),
     });
   };
 
@@ -94,7 +202,7 @@ export default function ConfiguracaoBancos() {
       : 'bg-red-100 text-red-700 border-red-200';
   };
 
-  if (carregando) {
+  if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
@@ -114,15 +222,29 @@ export default function ConfiguracaoBancos() {
                   <div className="text-sm text-gray-600">Regras de importação e classificação</div>
                 )}
               </div>
-              <button
-                onClick={carregarBancos}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-              >
-                Recarregar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCriarConta}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                >
+                  + Nova conta
+                </button>
+                <button
+                  onClick={recarregar}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Recarregar
+                </button>
+              </div>
             </div>
           }
         />
+
+        {erro && (
+          <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
+            {erro}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Lista de Bancos */}
@@ -133,15 +255,14 @@ export default function ConfiguracaoBancos() {
               </div>
               
               <div className="divide-y divide-gray-200">
-                {bancos.map(banco => (
+                {bancos.map((banco) => (
                   <button
                     key={banco.id}
                     onClick={() => {
-                      setBancoSelecionado(banco);
-                      setModalAberto(true);
+                      setSelecionadoId(banco.id);
                     }}
                     className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${
-                      bancoSelecionado?.id === banco.id ? 'bg-blue-100 border-l-4 border-blue-600' : ''
+                      selecionadoId === banco.id ? 'bg-blue-100 border-l-4 border-blue-600' : ''
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -157,18 +278,26 @@ export default function ConfiguracaoBancos() {
                     </div>
                   </button>
                 ))}
+                {bancos.length === 0 && (
+                  <div className="p-4 text-sm text-gray-600">
+                    Nenhuma conta configurada. Clique em <span className="font-semibold">+ Nova conta</span>.
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Detalhes do Banco Selecionado */}
-          {bancoSelecionado && (
+          {draft && (
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex justify-between items-center">
-                  <h2 className="text-lg font-bold">{bancoSelecionado.nome}</h2>
+                  <div>
+                    <h2 className="text-lg font-bold">{draft.nome}</h2>
+                    <div className="text-xs text-blue-100">Tudo aqui é configurável e fica salvo nas Configurações</div>
+                  </div>
                   <button
-                    onClick={() => setModalAberto(false)}
+                    onClick={() => setSelecionadoId(null)}
                     className="text-white hover:bg-blue-600 rounded p-1 transition-colors"
                   >
                     ✕
@@ -177,23 +306,65 @@ export default function ConfiguracaoBancos() {
 
                 <div className="p-6 space-y-4">
                   {/* Informações Básicas */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Código da Conta</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nome*</label>
                       <input
                         type="text"
-                        value={bancoSelecionado.contaCodigo}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                        value={draft.nome}
+                        onChange={(e) => atualizarDraft({ nome: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700"
                       />
+                    </div>
+                    <div className="flex items-center gap-3 pt-6">
+                      <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={draft.ativa}
+                          onChange={(e) => atualizarDraft({ ativa: e.target.checked })}
+                          className="rounded border-gray-300 text-blue-600"
+                        />
+                        Ativa
+                      </label>
+                      <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={!!draft.padrao}
+                          onChange={(e) => atualizarDraft({ padrao: e.target.checked })}
+                          className="rounded border-gray-300 text-blue-600"
+                        />
+                        Padrão
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Conta no Plano de Contas*</label>
+                      <select
+                        value={draft.contaCodigo}
+                        onChange={(e) => {
+                          const codigo = e.target.value;
+                          const conta = contasAnaliticas.find((c) => c.codigo === codigo);
+                          atualizarDraft({ contaCodigo: codigo, contaNome: conta?.nome || '' });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                      >
+                        <option value="">Selecione</option>
+                        {contasAnaliticas.map((c) => (
+                          <option key={c.codigo} value={c.codigo}>
+                            {c.codigo} - {c.nome} ({c.categoria})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Conta</label>
                       <input
                         type="text"
-                        value={bancoSelecionado.contaNome}
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                        value={draft.contaNome}
+                        onChange={(e) => atualizarDraft({ contaNome: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700"
                       />
                     </div>
                   </div>
@@ -203,10 +374,10 @@ export default function ConfiguracaoBancos() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Código da Receita Padrão</label>
                       <input
                         type="text"
-                        value={bancoSelecionado.contaPadraoReceita || ''}
+                        value={draft.contaPadraoReceita || ''}
                         placeholder="Ex: 4.1.01.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
-                        disabled
+                        onChange={(e) => atualizarDraft({ contaPadraoReceita: e.target.value })}
                       />
                       <p className="text-xs text-gray-500 mt-1">Conta usada para entradas sem classificação</p>
                     </div>
@@ -214,13 +385,158 @@ export default function ConfiguracaoBancos() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Código da Despesa Padrão</label>
                       <input
                         type="text"
-                        value={bancoSelecionado.contaPadraoDespesa || ''}
+                        value={draft.contaPadraoDespesa || ''}
                         placeholder="Ex: 5.99.99.999"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
-                        disabled
+                        onChange={(e) => atualizarDraft({ contaPadraoDespesa: e.target.value })}
                       />
                       <p className="text-xs text-gray-500 mt-1">Conta usada para saídas sem classificação</p>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Banco (opcional)</label>
+                      <input
+                        type="text"
+                        value={draft.banco || ''}
+                        onChange={(e) => atualizarDraft({ banco: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                        placeholder="Ex: Nu, 001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Agência (opcional)</label>
+                      <input
+                        type="text"
+                        value={draft.agencia || ''}
+                        onChange={(e) => atualizarDraft({ agencia: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                        placeholder="Ex: 0001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Conta (opcional)</label>
+                      <input
+                        type="text"
+                        value={draft.numeroConta || ''}
+                        onChange={(e) => atualizarDraft({ numeroConta: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                        placeholder="Ex: 12345-6"
+                      />
+                    </div>
+                  </div>
+
+                  <hr className="my-4" />
+
+                  {/* Layouts CSV */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-base font-semibold text-gray-900">Layouts CSV (detecção por cabeçalho)</h3>
+                      <button
+                        onClick={() => {
+                          const novo: CsvLayoutConfig = {
+                            id: `csv-${Date.now()}`,
+                            nome: 'Novo layout',
+                            camposObrigatorios: [...camposObrigatoriosBase],
+                            aliases: { data: ['data'], historico: ['descricao', 'descrição'], valor: ['valor'] },
+                          };
+                          atualizarDraft({ layoutsCsv: [...(draft.layoutsCsv || []), novo] });
+                        }}
+                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                      >
+                        + Layout
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      A importação usa o cabeçalho do CSV para escolher automaticamente um layout compatível.
+                    </p>
+
+                    {(draft.layoutsCsv || []).length === 0 ? (
+                      <div className="text-sm text-gray-500 italic">Nenhum layout CSV configurado</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {(draft.layoutsCsv || []).map((layout, idx) => (
+                          <div key={layout.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Nome</label>
+                                    <input
+                                      type="text"
+                                      value={layout.nome}
+                                      onChange={(e) => {
+                                        const layouts = [...(draft.layoutsCsv || [])];
+                                        layouts[idx] = { ...layout, nome: e.target.value };
+                                        atualizarDraft({ layoutsCsv: layouts });
+                                      }}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Campos obrigatórios (p/ bater no header)</label>
+                                    <div className="flex flex-wrap gap-3 pt-1">
+                                      {(['data', 'historico', 'valor', 'identificador'] as Array<Exclude<CsvCampoPadrao, 'tipo'>>).map((campo) => (
+                                        <label key={campo} className="inline-flex items-center gap-2 text-sm text-gray-700">
+                                          <input
+                                            type="checkbox"
+                                            checked={(layout.camposObrigatorios || []).includes(campo)}
+                                            onChange={(e) => {
+                                              const set = new Set(layout.camposObrigatorios || []);
+                                              if (e.target.checked) set.add(campo);
+                                              else set.delete(campo);
+                                              const layouts = [...(draft.layoutsCsv || [])];
+                                              layouts[idx] = { ...layout, camposObrigatorios: Array.from(set) };
+                                              atualizarDraft({ layoutsCsv: layouts });
+                                            }}
+                                            className="rounded border-gray-300 text-blue-600"
+                                          />
+                                          <span className="font-mono text-xs">{campo}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {camposCsv.map((campo) => (
+                                    <div key={campo}>
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                                        Aliases do header: <span className="font-mono">{campo}</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={(layout.aliases?.[campo] || []).join(', ')}
+                                        onChange={(e) => {
+                                          const aliases = { ...(layout.aliases || {}) } as CsvLayoutConfig['aliases'];
+                                          aliases[campo] = normalizarLista(e.target.value);
+                                          const layouts = [...(draft.layoutsCsv || [])];
+                                          layouts[idx] = { ...layout, aliases };
+                                          atualizarDraft({ layoutsCsv: layouts });
+                                        }}
+                                        placeholder="Ex: data, date"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const layouts = (draft.layoutsCsv || []).filter((l) => l.id !== layout.id);
+                                  atualizarDraft({ layoutsCsv: layouts });
+                                }}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                                title="Remover layout"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <hr className="my-4" />
@@ -240,11 +556,11 @@ export default function ConfiguracaoBancos() {
                       </button>
                     </div>
 
-                    {(bancoSelecionado.regrasClassificacao || []).length === 0 ? (
+                    {(draft.regrasClassificacao || []).length === 0 ? (
                       <p className="text-gray-500 text-sm italic">Nenhuma regra configurada</p>
                     ) : (
                       <div className="space-y-3">
-                        {bancoSelecionado.regrasClassificacao
+                        {draft.regrasClassificacao
                           ?.sort((a, b) => (a.prioridade || 99) - (b.prioridade || 99))
                           .map(regra => (
                             <div
@@ -299,6 +615,23 @@ export default function ConfiguracaoBancos() {
                           ))}
                       </div>
                     )}
+                  </div>
+
+                  <div className="flex flex-wrap justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={handleExcluir}
+                      disabled={salvando}
+                      className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium"
+                    >
+                      Remover
+                    </button>
+                    <button
+                      onClick={handleSalvar}
+                      disabled={!dirty || salvando}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold"
+                    >
+                      {salvando ? 'Salvando...' : dirty ? 'Salvar alterações' : 'Salvo'}
+                    </button>
                   </div>
                 </div>
               </div>

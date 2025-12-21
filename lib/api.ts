@@ -14,6 +14,17 @@ export interface ContaBancaria {
   subcontas?: ContaBancaria[];
 }
 
+export type CsvCampoPadrao = 'data' | 'historico' | 'valor' | 'tipo' | 'identificador';
+
+export interface CsvLayoutConfig {
+  id: string;
+  nome: string;
+  /** Campos mínimos para considerar o layout compatível com o cabeçalho do CSV */
+  camposObrigatorios: Array<Exclude<CsvCampoPadrao, 'tipo'>>;
+  /** Aliases por campo (comparação é normalizada: lower + sem acentos) */
+  aliases: Partial<Record<CsvCampoPadrao, string[]>>;
+}
+
 export interface ContaBancariaImportacao {
   id: string;
   nome: string; // Ex: "Banco do Brasil CC", "Nubank"
@@ -30,6 +41,8 @@ export interface ContaBancariaImportacao {
   // Máscaras de codificação específicas para este banco
   mascaraDebito?: string; // Ex: "1.1.01.001 - 1.1.99.999"
   mascaraCredito?: string; // Ex: "1.1.01.002 - 1.1.99.999"
+  // Importação por arquivo
+  layoutsCsv?: CsvLayoutConfig[];
   regrasClassificacao?: RegraClassificacao[];
 }
 

@@ -1,10 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
-import { getLancamentos, createLancamento, deleteLancamento, getContas, getConfiguracoes, importLancamentos, type Lancamento as LancamentoAPI, type ContaBancaria as ContaBancariaAPI, type AutoPatternConfig } from '@/lib/api';
+import {
+  getLancamentos,
+  createLancamento,
+  deleteLancamento,
+  getContas,
+  getConfiguracoes,
+  importLancamentos,
+  type Lancamento as LancamentoAPI,
+  type ContaBancaria as ContaBancariaAPI,
+  type AutoPatternConfig,
+  type ContaBancariaImportacao,
+  type CsvLayoutConfig,
+} from '@/lib/api';
 import { obterInformacoesPadrao, obterCorPadrao, type TipoOperacao } from '@/lib/padroes-contabeis';
 
 type ModoPartidas = 'umUm' | 'debitoParaCreditos' | 'creditosParaDebito';
@@ -558,6 +571,7 @@ function ModalLancamento({ isOpen, onClose, onSalvar, contasAnaliticas, lancamen
 }
 
 export default function Lancamentos() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const modoCompacto = useScrollCompact(150);
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
@@ -567,6 +581,9 @@ export default function Lancamentos() {
   const [contasAnaliticas, setContasAnaliticas] = useState<{ codigo: string; nome: string; categoria: string }[]>([]);
   const [autoPatterns, setAutoPatterns] = useState<AutoPatternConfig[]>([]);
   const [importModalAberto, setImportModalAberto] = useState(false);
+  const [importBancos, setImportBancos] = useState<ContaBancariaImportacao[]>([]);
+  const [importBancoId, setImportBancoId] = useState('');
+  const [importLayoutId, setImportLayoutId] = useState('');
   const [importContaBanco, setImportContaBanco] = useState('');
   const [importContaReceita, setImportContaReceita] = useState('');
   const [importContaDespesa, setImportContaDespesa] = useState('');
@@ -575,6 +592,7 @@ export default function Lancamentos() {
     historico: string; 
     valor: number; 
     tipo: 'entrada' | 'saida';
+    documento?: string;
     contaSugerida?: string;
     contaSugeridaNome?: string;
     confianca?: number;
@@ -583,6 +601,7 @@ export default function Lancamentos() {
   const [importErro, setImportErro] = useState('');
   const [importResumo, setImportResumo] = useState<{ sucesso: number; erros: number }>({ sucesso: 0, erros: 0 });
   const [importCarregando, setImportCarregando] = useState(false);
+  const [importTextoCsv, setImportTextoCsv] = useState('');
   
   // Estados dos filtros
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -650,7 +669,8 @@ export default function Lancamentos() {
 
   const parseValor = (valorRaw: string): number => {
     if (!valorRaw) return 0;
-    const normalizado = valorRaw.replace(/\./g, '').replace(',', '.').trim();
+    const trimmed = valorRaw.trim();
+    const normalizado = trimmed.includes(',') ? trimmed.replace(/\./g, '').replace(',', '.') : trimmed;
     const num = Number(normalizado);
     return Number.isFinite(num) ? num : 0;
   };
@@ -662,36 +682,165 @@ export default function Lancamentos() {
     return valor < 0 ? 'saida' : 'entrada';
   };
 
-  const parseExtratoCSV = (texto: string) => {
-    const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (linhas.length === 0) return [] as Array<{ data: string; historico: string; valor: number; tipo: 'entrada' | 'saida' }>;
+  const normalizarHeader = (texto: string) =>
+    (texto || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
 
-    const delim = texto.includes(';') ? ';' : ',';
-    const registros: Array<{ data: string; historico: string; valor: number; tipo: 'entrada' | 'saida' }> = [];
+  const detectarDelimitador = (linha: string) => {
+    const count = (ch: string) => (linha.match(new RegExp(`\\${ch}`, 'g')) || []).length;
+    const semi = count(';');
+    const comma = count(',');
+    return semi >= comma ? ';' : ',';
+  };
 
-    linhas.forEach((linha, idx) => {
-      const cols = linha.split(delim).map(c => c.trim());
-      const possivelCabecalho = cols.some(c => /data|descricao|historico|valor|tipo/i.test(c));
-      if (idx === 0 && possivelCabecalho) return;
+  const extrairCabecalho = (texto: string) => {
+    const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (linhas.length === 0) return { headers: [] as string[], headersNorm: [] as string[], delim: ';' as ';' | ',', linhas: [] as string[] };
+    const delim = detectarDelimitador(linhas[0]);
+    const headers = linhas[0].split(delim).map((c) => c.trim());
+    const headersNorm = headers.map(normalizarHeader);
+    return { headers, headersNorm, delim, linhas };
+  };
 
-      const [colData, colHistorico, colValor, colTipo] = cols;
+  const encontrarLayoutNoHeader = (headersNorm: string[], layout: CsvLayoutConfig) => {
+    const indices: Partial<Record<'data' | 'historico' | 'valor' | 'tipo' | 'identificador', number>> = {};
+    const aliases = layout.aliases || {};
+    (['data', 'historico', 'valor', 'tipo', 'identificador'] as const).forEach((campo) => {
+      const lista = (aliases as any)?.[campo] as string[] | undefined;
+      if (!lista || lista.length === 0) return;
+      const alNorm = lista.map(normalizarHeader);
+      const idx = headersNorm.findIndex((h) => alNorm.includes(h));
+      if (idx >= 0) indices[campo] = idx;
+    });
+
+    const obrigatorios = (layout.camposObrigatorios || []) as Array<'data' | 'historico' | 'valor' | 'identificador'>;
+    const ok = obrigatorios.every((c) => typeof (indices as any)[c] === 'number');
+    return { ok, indices };
+  };
+
+  const detectarContaELayoutPorHeader = (texto: string, bancos: ContaBancariaImportacao[]) => {
+    const { headersNorm } = extrairCabecalho(texto);
+    if (headersNorm.length === 0) return { matches: [] as Array<{ banco: ContaBancariaImportacao; layout: CsvLayoutConfig; score: number }>, headersNorm };
+
+    const matches: Array<{ banco: ContaBancariaImportacao; layout: CsvLayoutConfig; score: number }> = [];
+    bancos
+      .filter((b) => b.ativa)
+      .forEach((banco) => {
+        (banco.layoutsCsv || []).forEach((layout) => {
+          const { ok, indices } = encontrarLayoutNoHeader(headersNorm, layout);
+          if (!ok) return;
+          const obrigatorios = (layout.camposObrigatorios || []).length;
+          const encontrados = Object.values(indices).filter((v) => typeof v === 'number').length;
+          const score = obrigatorios * 10 + encontrados;
+          matches.push({ banco, layout, score });
+        });
+      });
+
+    matches.sort((a, b) => b.score - a.score);
+    return { matches, headersNorm };
+  };
+
+  const parseExtratoCSVComLayout = (texto: string, layout: CsvLayoutConfig) => {
+    const { headersNorm, delim, linhas } = extrairCabecalho(texto);
+    if (linhas.length === 0) return [] as Array<{ data: string; historico: string; valor: number; tipo: 'entrada' | 'saida'; documento?: string }>;
+
+    const { ok, indices } = encontrarLayoutNoHeader(headersNorm, layout);
+    if (!ok) {
+      throw new Error('Layout CSV não compatível com o cabeçalho do arquivo.');
+    }
+
+    const idxData = indices.data ?? -1;
+    const idxHist = indices.historico ?? -1;
+    const idxValor = indices.valor ?? -1;
+    const idxTipo = indices.tipo ?? -1;
+    const idxId = indices.identificador ?? -1;
+
+    const registros: Array<{ data: string; historico: string; valor: number; tipo: 'entrada' | 'saida'; documento?: string }> = [];
+    for (let i = 1; i < linhas.length; i++) {
+      const cols = linhas[i].split(delim).map((c) => c.trim());
+      const colData = idxData >= 0 ? cols[idxData] : '';
+      const colHistorico = idxHist >= 0 ? cols[idxHist] : '';
+      const colValor = idxValor >= 0 ? cols[idxValor] : '';
+      const colTipo = idxTipo >= 0 ? cols[idxTipo] : '';
+      const colId = idxId >= 0 ? cols[idxId] : '';
+
       const data = normalizarData(colData);
-      const valor = parseValor(colValor);
-      const tipo = detectarTipo(colTipo, valor);
-
-      if (!data || !colHistorico || !Number.isFinite(valor)) {
-        return;
-      }
+      const valorRaw = parseValor(colValor);
+      if (!data || !colHistorico || !Number.isFinite(valorRaw)) continue;
+      const tipo = detectarTipo(colTipo, valorRaw);
 
       registros.push({
         data,
         historico: colHistorico || 'Movimentação bancária',
-        valor: Math.abs(valor),
-        tipo
+        valor: Math.abs(valorRaw),
+        tipo,
+        documento: colId || undefined,
       });
-    });
+    }
 
     return registros;
+  };
+
+  const atualizarPreviewImportacao = (
+    texto: string,
+    bancoConta: ContaBancariaImportacao,
+    layoutEscolhido: CsvLayoutConfig
+  ) => {
+    const registros = parseExtratoCSVComLayout(texto, layoutEscolhido);
+
+    // Aplica classificação automática e sugestões de IA
+    const registrosComSugestoes = registros.map((reg) => {
+      // 1. Tenta classificação por regras
+      const classificacaoRegra = classificarTransacaoAutomatica(reg.historico, reg.tipo, bancoConta);
+
+      if (classificacaoRegra) {
+        const conta = contasAnaliticas.find((c) => c.codigo === classificacaoRegra.conta);
+        return {
+          ...reg,
+          contaSugerida: classificacaoRegra.conta,
+          contaSugeridaNome: conta?.nome || classificacaoRegra.conta,
+          confianca: classificacaoRegra.confianca,
+          razaoSugestao: 'Regra configurada',
+        };
+      }
+
+      // 2. Tenta sugestão por IA (histórico)
+      const sugestaoIA = gerarSugestaoIA(reg.historico, reg.valor, reg.tipo, lancamentos);
+      if (sugestaoIA) {
+        return {
+          ...reg,
+          contaSugerida: sugestaoIA.contaSugerida,
+          contaSugeridaNome: sugestaoIA.contaNomeSugerida,
+          confianca: sugestaoIA.confianca,
+          razaoSugestao: sugestaoIA.razao,
+        };
+      }
+
+      // 3. Usa conta padrão como fallback
+      const contaPadrao =
+        reg.tipo === 'entrada'
+          ? bancoConta?.contaPadraoReceita || importContaReceita
+          : bancoConta?.contaPadraoDespesa || importContaDespesa;
+
+      if (contaPadrao) {
+        const conta = contasAnaliticas.find((c) => c.codigo === contaPadrao);
+        return {
+          ...reg,
+          contaSugerida: contaPadrao,
+          contaSugeridaNome: conta?.nome || contaPadrao,
+          confianca: 50,
+          razaoSugestao: 'Conta padrão do banco',
+        };
+      }
+
+      return reg;
+    });
+
+    setImportPreview(registrosComSugestoes);
+    setImportResumo({ sucesso: registrosComSugestoes.length, erros: registrosComSugestoes.length === 0 ? 1 : 0 });
   };
 
   const processarArquivoImportacao = async (file: File) => {
@@ -699,70 +848,69 @@ export default function Lancamentos() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const texto = (e.target?.result as string) || '';
+      setImportTextoCsv(texto);
       try {
-        const registros = parseExtratoCSV(texto);
-        
-        // Busca configuração do banco selecionado para aplicar regras
         const config = await getConfiguracoes();
-        const bancoConta = config.contasBancarias?.find(b => b.contaCodigo === importContaBanco);
-        
-        // Aplica classificação automática e sugestões de IA
-        const registrosComSugestoes = registros.map(reg => {
-          // 1. Tenta classificação por regras
-          const classificacaoRegra = classificarTransacaoAutomatica(reg.historico, reg.tipo, bancoConta);
-          
-          if (classificacaoRegra) {
-            const conta = contasAnaliticas.find(c => c.codigo === classificacaoRegra.conta);
-            return {
-              ...reg,
-              contaSugerida: classificacaoRegra.conta,
-              contaSugeridaNome: conta?.nome || classificacaoRegra.conta,
-              confianca: classificacaoRegra.confianca,
-              razaoSugestao: 'Regra configurada'
-            };
+        const bancos = (config.contasBancarias || []) as unknown as ContaBancariaImportacao[];
+        setImportBancos(bancos);
+        const bancosAtivos = bancos.filter((b) => b?.ativa);
+        if (bancosAtivos.length === 0) {
+          setImportErro('Configure ao menos uma conta em “Configuração de Bancos” antes de importar.');
+          return;
+        }
+
+        // Tenta auto-detectar banco/layout pelo cabeçalho
+        const { matches } = detectarContaELayoutPorHeader(texto, bancosAtivos as ContaBancariaImportacao[]);
+        let bancoId = importBancoId;
+        let layoutId = importLayoutId;
+
+        if (matches.length > 0) {
+          const melhor = matches[0];
+          const empate = matches.filter((m) => m.score === melhor.score);
+          if (empate.length === 1) {
+            bancoId = melhor.banco.id;
+            layoutId = melhor.layout.id;
+            setImportBancoId(bancoId);
+            setImportLayoutId(layoutId);
+            setImportContaBanco(melhor.banco.contaCodigo);
+            if (melhor.banco.contaPadraoReceita && !importContaReceita) setImportContaReceita(melhor.banco.contaPadraoReceita);
+            if (melhor.banco.contaPadraoDespesa && !importContaDespesa) setImportContaDespesa(melhor.banco.contaPadraoDespesa);
+          } else {
+            setImportErro('Mais de um layout bateu com o cabeçalho. Selecione a conta e o layout manualmente.');
           }
-          
-          // 2. Tenta sugestão por IA (histórico)
-          const sugestaoIA = gerarSugestaoIA(reg.historico, reg.valor, reg.tipo, lancamentos);
-          
-          if (sugestaoIA) {
-            return {
-              ...reg,
-              contaSugerida: sugestaoIA.contaSugerida,
-              contaSugeridaNome: sugestaoIA.contaNomeSugerida,
-              confianca: sugestaoIA.confianca,
-              razaoSugestao: sugestaoIA.razao
-            };
-          }
-          
-          // 3. Usa conta padrão como fallback
-          const contaPadrao = reg.tipo === 'entrada' 
-            ? bancoConta?.contaPadraoReceita || importContaReceita
-            : bancoConta?.contaPadraoDespesa || importContaDespesa;
-          
-          if (contaPadrao) {
-            const conta = contasAnaliticas.find(c => c.codigo === contaPadrao);
-            return {
-              ...reg,
-              contaSugerida: contaPadrao,
-              contaSugeridaNome: conta?.nome || contaPadrao,
-              confianca: 50,
-              razaoSugestao: 'Conta padrão do banco'
-            };
-          }
-          
-          return reg;
-        });
-        
-        setImportPreview(registrosComSugestoes);
-        setImportResumo({ sucesso: registrosComSugestoes.length, erros: registrosComSugestoes.length === 0 ? 1 : 0 });
+        }
+
+        const bancoConta = bancos.find((b) => b?.id === bancoId);
+        const layoutEscolhido = (bancoConta?.layoutsCsv || []).find((l) => l.id === layoutId);
+        if (!bancoConta) {
+          setImportErro('Selecione uma conta configurada para importação.');
+          return;
+        }
+        if (!layoutEscolhido) {
+          setImportErro('Selecione um layout CSV configurado para esta conta.');
+          return;
+        }
+        atualizarPreviewImportacao(texto, bancoConta, layoutEscolhido);
       } catch (err) {
         console.error(err);
-        setImportErro('Falha ao ler o arquivo. Verifique se é CSV com colunas: data, descrição, valor, tipo(opcional)');
+        setImportErro('Falha ao ler o arquivo. Verifique se o cabeçalho do CSV está configurado em “Configuração de Bancos”.');
       }
     };
     reader.readAsText(file, 'utf-8');
   };
+
+  useEffect(() => {
+    if (!importTextoCsv) return;
+    if (!importBancoId || !importLayoutId) return;
+
+    const bancoConta = importBancos.find((b) => b.id === importBancoId);
+    const layoutEscolhido = bancoConta?.layoutsCsv?.find((l) => l.id === importLayoutId);
+    if (!bancoConta || !layoutEscolhido) return;
+
+    setImportErro('');
+    atualizarPreviewImportacao(importTextoCsv, bancoConta, layoutEscolhido);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importTextoCsv, importBancoId, importLayoutId, importBancos]);
 
   // Função para identificar o padrão do lançamento
   const identificarPadraoLancamento = (lancamento: Lancamento): { tipo: TipoOperacao; emoji: string; nome: string; cor: string } => {
@@ -965,6 +1113,20 @@ export default function Lancamentos() {
         const config = await getConfiguracoes();
         setAutoPatterns(config.autoPatterns || []);
 
+        const bancos = (config.contasBancarias || []) as unknown as ContaBancariaImportacao[];
+        setImportBancos(bancos);
+
+        const ativos = bancos.filter((b) => b.ativa);
+        const padrao = ativos.find((b) => b.padrao) || ativos[0];
+        if (padrao) {
+          if (!importBancoId) setImportBancoId(padrao.id);
+          if (!importContaBanco) setImportContaBanco(padrao.contaCodigo);
+          const primeiroLayout = padrao.layoutsCsv?.[0];
+          if (primeiroLayout && !importLayoutId) setImportLayoutId(primeiroLayout.id);
+          if (padrao.contaPadraoReceita && !importContaReceita) setImportContaReceita(padrao.contaPadraoReceita);
+          if (padrao.contaPadraoDespesa && !importContaDespesa) setImportContaDespesa(padrao.contaPadraoDespesa);
+        }
+
         // Usa conta bancária padrão configurada para importação
         const contaPadrao = config.contasBancarias?.find(c => c.padrao && c.ativa);
         if (contaPadrao && !importContaBanco) {
@@ -976,7 +1138,11 @@ export default function Lancamentos() {
     };
 
     carregarConfigPadroes();
-  }, [importContaBanco]);
+  }, [importBancoId, importContaBanco, importContaDespesa, importContaReceita, importLayoutId]);
+
+  const bancosAtivos = importBancos.filter((b) => b.ativa);
+  const bancoSelecionadoImport = bancosAtivos.find((b) => b.id === importBancoId) || null;
+  const layoutsBancoSelecionado = bancoSelecionadoImport?.layoutsCsv || [];
 
   const handleExcluirLancamento = async (id: string) => {
     if (!confirm('Deseja realmente excluir este lançamento?')) return;
@@ -993,8 +1159,15 @@ export default function Lancamentos() {
   const handleImportarLancamentos = async () => {
     setImportErro('');
 
-    if (!importContaBanco || !importContaReceita || !importContaDespesa) {
-      setImportErro('Selecione as contas de banco, receita e despesa');
+    if (!importBancoId || !importContaBanco) {
+      setImportErro('Selecione uma conta configurada para importação');
+      return;
+    }
+
+    const contaReceitaFinal = bancoSelecionadoImport?.contaPadraoReceita || importContaReceita;
+    const contaDespesaFinal = bancoSelecionadoImport?.contaPadraoDespesa || importContaDespesa;
+    if (!contaReceitaFinal || !contaDespesaFinal) {
+      setImportErro('Configure as contas padrão (receita/despesa) para esta conta, ou selecione manualmente');
       return;
     }
 
@@ -1008,15 +1181,15 @@ export default function Lancamentos() {
       const agora = Date.now();
       const isoAgora = new Date().toISOString();
       const contaBancoNome = obterNomeConta(importContaBanco);
-      const contaReceitaNome = obterNomeConta(importContaReceita);
-      const contaDespesaNome = obterNomeConta(importContaDespesa);
+      const contaReceitaNome = obterNomeConta(contaReceitaFinal);
+      const contaDespesaNome = obterNomeConta(contaDespesaFinal);
 
       const novosLancamentos = importPreview.map((reg, idx) => {
         const ehEntrada = reg.tipo === 'entrada';
         const valor = Math.abs(reg.valor);
         
         // Usa conta sugerida se disponível e com alta confiança, senão usa padrão
-        let contaClassificacao = ehEntrada ? importContaReceita : importContaDespesa;
+        let contaClassificacao = ehEntrada ? contaReceitaFinal : contaDespesaFinal;
         let contaClassificacaoNome = ehEntrada ? contaReceitaNome : contaDespesaNome;
         
         if (reg.contaSugerida && (reg.confianca || 0) >= 70) {
@@ -1032,7 +1205,7 @@ export default function Lancamentos() {
         return {
           id: `${agora}-${idx}`,
           data: reg.data,
-          documento: undefined,
+          documento: (reg as any).documento,
           historico: reg.historico,
           partidas: [
             {
@@ -1240,7 +1413,34 @@ export default function Lancamentos() {
               </select>
 
               <button
-                onClick={() => setImportModalAberto(true)}
+                onClick={async () => {
+                  try {
+                    const config = await getConfiguracoes();
+                    const bancos = (config.contasBancarias || []) as unknown as ContaBancariaImportacao[];
+                    const ativos = bancos.filter((b) => b.ativa);
+                    if (ativos.length === 0) {
+                      alert('Antes de importar, configure uma conta em “Configuração de Bancos”.');
+                      router.push('/configuracao-bancos');
+                      return;
+                    }
+                    setImportBancos(bancos);
+                    const padrao = ativos.find((b) => b.padrao) || ativos[0];
+                    if (padrao) {
+                      setImportBancoId(padrao.id);
+                      setImportContaBanco(padrao.contaCodigo);
+                      setImportLayoutId(padrao.layoutsCsv?.[0]?.id || '');
+                      if (padrao.contaPadraoReceita) setImportContaReceita(padrao.contaPadraoReceita);
+                      if (padrao.contaPadraoDespesa) setImportContaDespesa(padrao.contaPadraoDespesa);
+                    }
+                    setImportErro('');
+                    setImportResumo({ sucesso: 0, erros: 0 });
+                    setImportPreview([]);
+                    setImportModalAberto(true);
+                  } catch (e) {
+                    console.error(e);
+                    alert('Erro ao carregar configurações.');
+                  }
+                }}
                 className="px-3 md:px-4 py-2 border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium whitespace-nowrap"
               >
                 Importar extrato
@@ -1700,7 +1900,7 @@ export default function Lancamentos() {
           <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full my-auto max-h-[80vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
               <h3 className="text-xl font-semibold text-gray-800">Importar extrato bancário (CSV)</h3>
-              <p className="text-sm text-gray-600 mt-1">Colunas esperadas: <code>data</code>, <code>descrição</code>, <code>valor</code>, <code>tipo</code> (opcional: entrada/saída)</p>
+              <p className="text-sm text-gray-600 mt-1">A detecção do banco/layout é feita pelo cabeçalho configurado em <code>Configuração de Bancos</code>.</p>
             </div>
 
             <div className="p-6 space-y-4">
@@ -1719,17 +1919,87 @@ export default function Lancamentos() {
 
               <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Conta bancária (ativo)</label>
+                  <label className="text-sm font-medium text-gray-700">Conta configurada</label>
                   <select
-                    value={importContaBanco}
-                    onChange={(e) => setImportContaBanco(e.target.value)}
+                    value={importBancoId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setImportBancoId(id);
+                      const b = bancosAtivos.find((x) => x.id === id);
+                      if (b) {
+                        setImportContaBanco(b.contaCodigo);
+                        setImportLayoutId(b.layoutsCsv?.[0]?.id || '');
+                        if (b.contaPadraoReceita) setImportContaReceita(b.contaPadraoReceita);
+                        if (b.contaPadraoDespesa) setImportContaDespesa(b.contaPadraoDespesa);
+                      }
+                      setImportPreview([]);
+                      setImportResumo({ sucesso: 0, erros: 0 });
+                      setImportErro('');
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="">Selecione</option>
-                    {contasAnaliticas.filter(c => c.codigo.startsWith('1.')).map(c => (
-                      <option key={c.codigo} value={c.codigo}>{c.codigo} - {c.nome}</option>
+                    {bancosAtivos.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.nome} — {b.contaCodigo}
+                      </option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Layout CSV</label>
+                  <select
+                    value={importLayoutId}
+                    onChange={(e) => {
+                      setImportLayoutId(e.target.value);
+                      setImportPreview([]);
+                      setImportResumo({ sucesso: 0, erros: 0 });
+                      setImportErro('');
+                    }}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    disabled={!bancoSelecionadoImport || layoutsBancoSelecionado.length === 0}
+                  >
+                    <option value="">Selecione</option>
+                    {layoutsBancoSelecionado.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Receita (fallback)</label>
+                    <select
+                      value={importContaReceita}
+                      onChange={(e) => setImportContaReceita(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    >
+                      <option value="">Usar configuração do banco</option>
+                      {contasAnaliticas.filter((c) => c.codigo.startsWith('4.')).map((c) => (
+                        <option key={c.codigo} value={c.codigo}>
+                          {c.codigo} - {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Despesa (fallback)</label>
+                    <select
+                      value={importContaDespesa}
+                      onChange={(e) => setImportContaDespesa(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    >
+                      <option value="">Usar configuração do banco</option>
+                      {contasAnaliticas.filter((c) => c.codigo.startsWith('5.')).map((c) => (
+                        <option key={c.codigo} value={c.codigo}>
+                          {c.codigo} - {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 

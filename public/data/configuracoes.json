@@ -10,6 +10,55 @@
   },
   "contasBancarias": [
     {
+      "id": "nubank-cc-1",
+      "nome": "Nubank - Conta Corrente",
+      "contaCodigo": "1.1.01.002",
+      "contaNome": "Banco - Nubank (Conta Corrente)",
+      "banco": "Nu",
+      "padrao": false,
+      "ativa": true,
+      "contaPadraoReceita": "4.1.01.001",
+      "contaPadraoDespesa": "5.99.99.999",
+      "layoutsCsv": [
+        {
+          "id": "nubank-cc-layout-1",
+          "nome": "Padrão (Data, Valor, Identificador, Descrição)",
+          "camposObrigatorios": ["data", "valor", "historico"],
+          "aliases": {
+            "data": ["data"],
+            "valor": ["valor"],
+            "identificador": ["identificador"],
+            "historico": ["descrição", "descricao", "descrição da transação", "descricao da transacao"]
+          }
+        }
+      ],
+      "regrasClassificacao": []
+    },
+    {
+      "id": "nubank-cartao-1",
+      "nome": "Nubank - Cartão",
+      "contaCodigo": "2.1.01.002",
+      "contaNome": "Cartão de Crédito - Nubank",
+      "banco": "Nu",
+      "padrao": false,
+      "ativa": true,
+      "contaPadraoReceita": "4.1.01.001",
+      "contaPadraoDespesa": "5.99.99.999",
+      "layoutsCsv": [
+        {
+          "id": "nubank-cartao-layout-1",
+          "nome": "Padrão (date, title, amount)",
+          "camposObrigatorios": ["data", "valor", "historico"],
+          "aliases": {
+            "data": ["date", "data"],
+            "historico": ["title", "descrição", "descricao"],
+            "valor": ["amount", "valor"]
+          }
+        }
+      ],
+      "regrasClassificacao": []
+    },
+    {
       "id": "bb-cc-1",
       "nome": "Banco do Brasil - Conta Corrente",
       "contaCodigo": "1.1.01.001",
