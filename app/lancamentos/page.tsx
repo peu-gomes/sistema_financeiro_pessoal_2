@@ -907,6 +907,22 @@ export default function Lancamentos() {
     setImportPreview(prev => prev.map(l => l.selecionado ? { ...l, ignorar: true } : l));
   };
 
+  const recarregarConfiguracoesImport = async () => {
+    try {
+      const config = await getConfiguracoes();
+      const bancos = (config.contasBancarias || []) as ContaBancariaImportacao[];
+      setImportBancos(bancos);
+      const bancoConta = bancos.find((b) => b.id === importBancoId);
+      const layoutEscolhido = bancoConta?.layoutsCsv?.find((l) => l.id === importLayoutId);
+      if (importTextoCsv && bancoConta && layoutEscolhido) {
+        atualizarPreviewImportacao(importTextoCsv, bancoConta, layoutEscolhido);
+      }
+    } catch (error) {
+      console.error('Erro ao recarregar configurações:', error);
+      setImportErro('Falha ao recarregar configurações.');
+    }
+  };
+
   const extrairPalavrasChave = (historico: string): string[] => {
     const norm = historico.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
     return norm
@@ -2167,7 +2183,24 @@ export default function Lancamentos() {
                       </select>
                       <button onClick={() => bulkContaCodigo && aplicarContaSelecionados(bulkContaCodigo)} className="px-3 py-1 text-xs border rounded">Aplicar às selecionadas</button>
                     </div>
-                    <a href="/configuracao-bancos" className="ml-auto text-xs text-blue-600 hover:underline">Abrir Configuração de Bancos</a>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        onClick={() => recarregarConfiguracoesImport()}
+                        className="px-3 py-1 text-xs border rounded"
+                        title="Recarregar configurações sem fechar o modal"
+                      >
+                        Recarregar configs
+                      </button>
+                      <a
+                        href="/configuracao-bancos"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                        title="Abre Configuração de Bancos em nova aba sem fechar este modal"
+                      >
+                        Abrir Configuração de Bancos
+                      </a>
+                    </div>
                   </div>
 
                   <div className="border rounded">
