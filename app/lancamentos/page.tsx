@@ -581,6 +581,10 @@ export default function Lancamentos() {
   const [contasAnaliticas, setContasAnaliticas] = useState<{ codigo: string; nome: string; categoria: string }[]>([]);
   const [autoPatterns, setAutoPatterns] = useState<AutoPatternConfig[]>([]);
   const [importModalAberto, setImportModalAberto] = useState(false);
+  const [importEtapa, setImportEtapa] = useState<'arquivo' | 'selecionar-banco' | 'detalhes'>('arquivo');
+  const [importOpcoesDetectadas, setImportOpcoesDetectadas] = useState<
+    Array<{ bancoId: string; bancoNome: string; contaCodigo: string; layoutId: string; layoutNome: string; score: number }>
+  >([]);
   const [importBancos, setImportBancos] = useState<ContaBancariaImportacao[]>([]);
   const [importBancoId, setImportBancoId] = useState('');
   const [importLayoutId, setImportLayoutId] = useState('');
@@ -819,11 +823,8 @@ export default function Lancamentos() {
         };
       }
 
-      // 3. Usa conta padrão como fallback
-      const contaPadrao =
-        reg.tipo === 'entrada'
-          ? bancoConta?.contaPadraoReceita || importContaReceita
-          : bancoConta?.contaPadraoDespesa || importContaDespesa;
+      // 3. Usa conta padrão do banco como fallback (tudo configurável em Configuração de Bancos)
+      const contaPadrao = reg.tipo === 'entrada' ? bancoConta?.contaPadraoReceita : bancoConta?.contaPadraoDespesa;
 
       if (contaPadrao) {
         const conta = contasAnaliticas.find((c) => c.codigo === contaPadrao);
@@ -845,6 +846,9 @@ export default function Lancamentos() {
 
   const processarArquivoImportacao = async (file: File) => {
     setImportErro('');
+    setImportPreview([]);
+    setImportResumo({ sucesso: 0, erros: 0 });
+    setImportOpcoesDetectadas([]);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const texto = (e.target?.result as string) || '';
@@ -861,36 +865,59 @@ export default function Lancamentos() {
 
         // Tenta auto-detectar banco/layout pelo cabeçalho
         const { matches } = detectarContaELayoutPorHeader(texto, bancosAtivos as ContaBancariaImportacao[]);
-        let bancoId = importBancoId;
-        let layoutId = importLayoutId;
+        if (matches.length === 0) {
+          setImportEtapa('arquivo');
+          setImportErro('Não foi possível identificar o banco pelo cabeçalho. Ajuste os aliases do layout em “Configuração de Bancos”.');
+          return;
+        }
 
-        if (matches.length > 0) {
-          const melhor = matches[0];
-          const empate = matches.filter((m) => m.score === melhor.score);
-          if (empate.length === 1) {
-            bancoId = melhor.banco.id;
-            layoutId = melhor.layout.id;
-            setImportBancoId(bancoId);
-            setImportLayoutId(layoutId);
-            setImportContaBanco(melhor.banco.contaCodigo);
-            if (melhor.banco.contaPadraoReceita && !importContaReceita) setImportContaReceita(melhor.banco.contaPadraoReceita);
-            if (melhor.banco.contaPadraoDespesa && !importContaDespesa) setImportContaDespesa(melhor.banco.contaPadraoDespesa);
-          } else {
-            setImportErro('Mais de um layout bateu com o cabeçalho. Selecione a conta e o layout manualmente.');
+        // Escolhe o melhor layout por banco e decide se precisa perguntar ao usuário
+        const melhorPorBanco = new Map<
+          string,
+          { banco: ContaBancariaImportacao; layout: CsvLayoutConfig; score: number }
+        >();
+        for (const m of matches) {
+          const atual = melhorPorBanco.get(m.banco.id);
+          if (!atual || m.score > atual.score) {
+            melhorPorBanco.set(m.banco.id, { banco: m.banco, layout: m.layout, score: m.score });
           }
         }
 
-        const bancoConta = bancos.find((b) => b?.id === bancoId);
-        const layoutEscolhido = (bancoConta?.layoutsCsv || []).find((l) => l.id === layoutId);
-        if (!bancoConta) {
-          setImportErro('Selecione uma conta configurada para importação.');
+        const opcoes = Array.from(melhorPorBanco.values())
+          .sort((a, b) => b.score - a.score)
+          .map((o) => ({
+            bancoId: o.banco.id,
+            bancoNome: o.banco.nome,
+            contaCodigo: o.banco.contaCodigo,
+            layoutId: o.layout.id,
+            layoutNome: o.layout.nome,
+            score: o.score,
+          }));
+
+        if (opcoes.length === 1) {
+          const unico = opcoes[0];
+          const bancoConta = bancos.find((b) => b?.id === unico.bancoId);
+          const layoutEscolhido = (bancoConta?.layoutsCsv || []).find((l) => l.id === unico.layoutId);
+          if (!bancoConta || !layoutEscolhido) {
+            setImportEtapa('arquivo');
+            setImportErro('Banco/layout identificado, mas não encontrado nas configurações. Reabra o modal e tente novamente.');
+            return;
+          }
+
+          setImportBancoId(unico.bancoId);
+          setImportLayoutId(unico.layoutId);
+          setImportContaBanco(bancoConta.contaCodigo);
+          setImportEtapa('detalhes');
+          atualizarPreviewImportacao(texto, bancoConta, layoutEscolhido);
           return;
         }
-        if (!layoutEscolhido) {
-          setImportErro('Selecione um layout CSV configurado para esta conta.');
-          return;
-        }
-        atualizarPreviewImportacao(texto, bancoConta, layoutEscolhido);
+
+        // Mais de 1 banco identificado: pedir escolha do usuário
+        setImportBancoId('');
+        setImportLayoutId('');
+        setImportContaBanco('');
+        setImportEtapa('selecionar-banco');
+        setImportOpcoesDetectadas(opcoes);
       } catch (err) {
         console.error(err);
         setImportErro('Falha ao ler o arquivo. Verifique se o cabeçalho do CSV está configurado em “Configuração de Bancos”.');
@@ -900,6 +927,7 @@ export default function Lancamentos() {
   };
 
   useEffect(() => {
+    if (importEtapa !== 'detalhes') return;
     if (!importTextoCsv) return;
     if (!importBancoId || !importLayoutId) return;
 
@@ -910,7 +938,7 @@ export default function Lancamentos() {
     setImportErro('');
     atualizarPreviewImportacao(importTextoCsv, bancoConta, layoutEscolhido);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [importTextoCsv, importBancoId, importLayoutId, importBancos]);
+  }, [importEtapa, importTextoCsv, importBancoId, importLayoutId, importBancos]);
 
   // Função para identificar o padrão do lançamento
   const identificarPadraoLancamento = (lancamento: Lancamento): { tipo: TipoOperacao; emoji: string; nome: string; cor: string } => {
@@ -1116,17 +1144,6 @@ export default function Lancamentos() {
         const bancos = (config.contasBancarias || []) as unknown as ContaBancariaImportacao[];
         setImportBancos(bancos);
 
-        const ativos = bancos.filter((b) => b.ativa);
-        const padrao = ativos.find((b) => b.padrao) || ativos[0];
-        if (padrao) {
-          if (!importBancoId) setImportBancoId(padrao.id);
-          if (!importContaBanco) setImportContaBanco(padrao.contaCodigo);
-          const primeiroLayout = padrao.layoutsCsv?.[0];
-          if (primeiroLayout && !importLayoutId) setImportLayoutId(primeiroLayout.id);
-          if (padrao.contaPadraoReceita && !importContaReceita) setImportContaReceita(padrao.contaPadraoReceita);
-          if (padrao.contaPadraoDespesa && !importContaDespesa) setImportContaDespesa(padrao.contaPadraoDespesa);
-        }
-
         // Usa conta bancária padrão configurada para importação
         const contaPadrao = config.contasBancarias?.find(c => c.padrao && c.ativa);
         if (contaPadrao && !importContaBanco) {
@@ -1144,6 +1161,26 @@ export default function Lancamentos() {
   const bancoSelecionadoImport = bancosAtivos.find((b) => b.id === importBancoId) || null;
   const layoutsBancoSelecionado = bancoSelecionadoImport?.layoutsCsv || [];
 
+  const selecionarBancoDetectado = (bancoId: string) => {
+    if (!importTextoCsv) return;
+    const opcao = importOpcoesDetectadas.find((o) => o.bancoId === bancoId);
+    if (!opcao) return;
+
+    const bancoConta = importBancos.find((b) => b.id === opcao.bancoId);
+    const layoutEscolhido = bancoConta?.layoutsCsv?.find((l) => l.id === opcao.layoutId);
+    if (!bancoConta || !layoutEscolhido) {
+      setImportErro('Banco/layout selecionado não encontrado nas configurações.');
+      return;
+    }
+
+    setImportBancoId(opcao.bancoId);
+    setImportLayoutId(opcao.layoutId);
+    setImportContaBanco(bancoConta.contaCodigo);
+    setImportEtapa('detalhes');
+    setImportErro('');
+    atualizarPreviewImportacao(importTextoCsv, bancoConta, layoutEscolhido);
+  };
+
   const handleExcluirLancamento = async (id: string) => {
     if (!confirm('Deseja realmente excluir este lançamento?')) return;
 
@@ -1159,15 +1196,20 @@ export default function Lancamentos() {
   const handleImportarLancamentos = async () => {
     setImportErro('');
 
-    if (!importBancoId || !importContaBanco) {
-      setImportErro('Selecione uma conta configurada para importação');
+    if (importEtapa !== 'detalhes') {
+      setImportErro('Selecione o arquivo e avance para a etapa de análise antes de importar.');
       return;
     }
 
-    const contaReceitaFinal = bancoSelecionadoImport?.contaPadraoReceita || importContaReceita;
-    const contaDespesaFinal = bancoSelecionadoImport?.contaPadraoDespesa || importContaDespesa;
+    if (!importBancoId || !importContaBanco) {
+      setImportErro('Banco não selecionado/identificado.');
+      return;
+    }
+
+    const contaReceitaFinal = bancoSelecionadoImport?.contaPadraoReceita;
+    const contaDespesaFinal = bancoSelecionadoImport?.contaPadraoDespesa;
     if (!contaReceitaFinal || !contaDespesaFinal) {
-      setImportErro('Configure as contas padrão (receita/despesa) para esta conta, ou selecione manualmente');
+      setImportErro('Configure as contas padrão (receita/despesa) desta conta em “Configuração de Bancos”.');
       return;
     }
 
@@ -1424,14 +1466,14 @@ export default function Lancamentos() {
                       return;
                     }
                     setImportBancos(bancos);
-                    const padrao = ativos.find((b) => b.padrao) || ativos[0];
-                    if (padrao) {
-                      setImportBancoId(padrao.id);
-                      setImportContaBanco(padrao.contaCodigo);
-                      setImportLayoutId(padrao.layoutsCsv?.[0]?.id || '');
-                      if (padrao.contaPadraoReceita) setImportContaReceita(padrao.contaPadraoReceita);
-                      if (padrao.contaPadraoDespesa) setImportContaDespesa(padrao.contaPadraoDespesa);
-                    }
+                    setImportEtapa('arquivo');
+                    setImportOpcoesDetectadas([]);
+                    setImportTextoCsv('');
+                    setImportBancoId('');
+                    setImportLayoutId('');
+                    setImportContaBanco('');
+                    setImportContaReceita('');
+                    setImportContaDespesa('');
                     setImportErro('');
                     setImportResumo({ sucesso: 0, erros: 0 });
                     setImportPreview([]);
@@ -1917,91 +1959,40 @@ export default function Lancamentos() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Conta configurada</label>
+              {importEtapa === 'selecionar-banco' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Bancos identificados no CSV</label>
                   <select
                     value={importBancoId}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setImportBancoId(id);
-                      const b = bancosAtivos.find((x) => x.id === id);
-                      if (b) {
-                        setImportContaBanco(b.contaCodigo);
-                        setImportLayoutId(b.layoutsCsv?.[0]?.id || '');
-                        if (b.contaPadraoReceita) setImportContaReceita(b.contaPadraoReceita);
-                        if (b.contaPadraoDespesa) setImportContaDespesa(b.contaPadraoDespesa);
-                      }
-                      setImportPreview([]);
-                      setImportResumo({ sucesso: 0, erros: 0 });
-                      setImportErro('');
-                    }}
+                    onChange={(e) => selecionarBancoDetectado(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
                     <option value="">Selecione</option>
-                    {bancosAtivos.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.nome} — {b.contaCodigo}
+                    {importOpcoesDetectadas.map((o) => (
+                      <option key={o.bancoId} value={o.bancoId}>
+                        {o.bancoNome} — {o.contaCodigo}
                       </option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-600">
+                    O sistema identificou mais de um banco pelo cabeçalho. Selecione qual deseja usar.
+                  </p>
                 </div>
+              )}
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Layout CSV</label>
-                  <select
-                    value={importLayoutId}
-                    onChange={(e) => {
-                      setImportLayoutId(e.target.value);
-                      setImportPreview([]);
-                      setImportResumo({ sucesso: 0, erros: 0 });
-                      setImportErro('');
-                    }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    disabled={!bancoSelecionadoImport || layoutsBancoSelecionado.length === 0}
-                  >
-                    <option value="">Selecione</option>
-                    {layoutsBancoSelecionado.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Receita (fallback)</label>
-                    <select
-                      value={importContaReceita}
-                      onChange={(e) => setImportContaReceita(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    >
-                      <option value="">Usar configuração do banco</option>
-                      {contasAnaliticas.filter((c) => c.codigo.startsWith('4.')).map((c) => (
-                        <option key={c.codigo} value={c.codigo}>
-                          {c.codigo} - {c.nome}
-                        </option>
-                      ))}
-                    </select>
+              {importEtapa === 'detalhes' && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="text-sm text-gray-800">
+                    <span className="font-semibold">Banco:</span> {bancoSelecionadoImport?.nome || '-'}
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Despesa (fallback)</label>
-                    <select
-                      value={importContaDespesa}
-                      onChange={(e) => setImportContaDespesa(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    >
-                      <option value="">Usar configuração do banco</option>
-                      {contasAnaliticas.filter((c) => c.codigo.startsWith('5.')).map((c) => (
-                        <option key={c.codigo} value={c.codigo}>
-                          {c.codigo} - {c.nome}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="text-xs text-gray-600 mt-1">
+                    <span className="font-semibold">Conta do plano:</span> {importContaBanco || '-'}
+                    {' · '}
+                    <span className="font-semibold">Layout:</span>{' '}
+                    {(layoutsBancoSelecionado.find((l) => l.id === importLayoutId)?.nome) || '-'}
                   </div>
                 </div>
-              </div>
+              )}
 
               {importErro && <div className="text-sm text-red-600">{importErro}</div>}
               {importResumo.sucesso > 0 && (
@@ -2010,7 +2001,7 @@ export default function Lancamentos() {
                 </div>
               )}
 
-              {importPreview.length > 0 && (
+              {importEtapa === 'detalhes' && importPreview.length > 0 && (
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="px-4 py-2 bg-gray-50 text-sm font-medium text-gray-700">
                     Pré-visualização com classificação inteligente (primeiras 10 linhas)
@@ -2089,20 +2080,29 @@ export default function Lancamentos() {
                 <button
                   onClick={() => {
                     setImportModalAberto(false);
+                    setImportEtapa('arquivo');
+                    setImportOpcoesDetectadas([]);
+                    setImportTextoCsv('');
+                    setImportBancoId('');
+                    setImportLayoutId('');
+                    setImportContaBanco('');
                     setImportPreview([]);
                     setImportErro('');
+                    setImportResumo({ sucesso: 0, erros: 0 });
                   }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
-                <button
-                  onClick={handleImportarLancamentos}
-                  disabled={importCarregando}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold"
-                >
-                  {importCarregando ? 'Importando...' : 'Importar lançamentos'}
-                </button>
+                {importEtapa === 'detalhes' && (
+                  <button
+                    onClick={handleImportarLancamentos}
+                    disabled={importCarregando}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold"
+                  >
+                    {importCarregando ? 'Importando...' : 'Importar lançamentos'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
