@@ -11,6 +11,7 @@ import {
   deleteLancamento,
   getContas,
   getConfiguracoes,
+  saveConfiguracoes,
   importLancamentos,
   type Lancamento as LancamentoAPI,
   type ContaBancaria as ContaBancariaAPI,
@@ -593,6 +594,7 @@ export default function Lancamentos() {
   const [importContaReceita, setImportContaReceita] = useState('');
   const [importContaDespesa, setImportContaDespesa] = useState('');
   const [importPreview, setImportPreview] = useState<Array<{ 
+    id: string;
     data: string; 
     historico: string; 
     valor: number; 
@@ -602,11 +604,18 @@ export default function Lancamentos() {
     contaSugeridaNome?: string;
     confianca?: number;
     razaoSugestao?: string;
+    selecionado?: boolean;
+    ignorar?: boolean;
+    contaFinal?: string;
+    contaFinalNome?: string;
   }>>([]);
   const [importErro, setImportErro] = useState('');
   const [importResumo, setImportResumo] = useState<{ sucesso: number; erros: number }>({ sucesso: 0, erros: 0 });
   const [importCarregando, setImportCarregando] = useState(false);
   const [importTextoCsv, setImportTextoCsv] = useState('');
+  const [bulkContaCodigo, setBulkContaCodigo] = useState('');
+  const [importPaginaAtual, setImportPaginaAtual] = useState(1);
+  const [importLinhasPorPagina, setImportLinhasPorPagina] = useState(25);
   
   // Estados dos filtros
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -847,8 +856,101 @@ export default function Lancamentos() {
       return reg;
     });
 
-    setImportPreview(registrosComSugestoes);
-    setImportResumo({ sucesso: registrosComSugestoes.length, erros: registrosComSugestoes.length === 0 ? 1 : 0 });
+    // Adiciona campos de conferência e IDs estáveis por ordem
+    const agora = Date.now();
+    const registrosComCampos = registrosComSugestoes.map((r, idx) => ({
+      id: `${agora}-${idx}`,
+      selecionado: true,
+      ignorar: false,
+      ...r,
+    }));
+
+    setImportPreview(registrosComCampos);
+    setImportResumo({ sucesso: registrosComCampos.length, erros: registrosComCampos.length === 0 ? 1 : 0 });
+  };
+
+  // ===== Conferência: helpers de seleção, aplicação e regras =====
+  const atualizarLinhaPreview = (id: string, patch: Partial<typeof importPreview[number]>) => {
+    setImportPreview(prev => prev.map(l => l.id === id ? { ...l, ...patch } : l));
+  };
+
+  const selecionarPendentes = () => {
+    setImportPreview(prev => prev.map(l => {
+      const resolvida = !!l.contaFinal || (!!l.contaSugerida && (l.confianca || 0) >= 70) || !!l.ignorar;
+      return { ...l, selecionado: !resolvida };
+    }));
+  };
+
+  const aplicarContaSelecionados = (codigoConta: string) => {
+    const nome = obterNomeConta(codigoConta);
+    setImportPreview(prev => prev.map(l => l.selecionado && !l.ignorar ? { ...l, contaFinal: codigoConta, contaFinalNome: nome } : l));
+  };
+
+  const aceitarSugestoesSelecionados = () => {
+    setImportPreview(prev => prev.map(l => {
+      if (!l.selecionado || l.ignorar) return l;
+      if (l.contaSugerida && (l.confianca || 0) >= 70) {
+        return { ...l, contaFinal: l.contaSugerida, contaFinalNome: l.contaSugeridaNome || obterNomeConta(l.contaSugerida) };
+      }
+      return l;
+    }));
+  };
+
+  const ignorarSelecionados = () => {
+    setImportPreview(prev => prev.map(l => l.selecionado ? { ...l, ignorar: true } : l));
+  };
+
+  const extrairPalavrasChave = (historico: string): string[] => {
+    const norm = historico.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    return norm
+      .replace(/[^a-zA-Z\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3)
+      .slice(0, 5);
+  };
+
+  const salvarRegraParaLinha = async (linhaId: string) => {
+    const linha = importPreview.find(l => l.id === linhaId);
+    const bancoConta = importBancos.find(b => b.id === importBancoId);
+    if (!linha || !bancoConta) {
+      setImportErro('Linha ou banco não disponível para salvar regra.');
+      return;
+    }
+    const contaDestino = linha.contaFinal || linha.contaSugerida;
+    if (!contaDestino) {
+      setImportErro('Defina uma conta para a linha antes de salvar a regra.');
+      return;
+    }
+
+    try {
+      const config = await getConfiguracoes();
+      const bancos = (config.contasBancarias || []) as ContaBancariaImportacao[];
+      const alvo = bancos.find(b => b.id === importBancoId);
+      if (!alvo) throw new Error('Banco não encontrado nas configurações.');
+
+      const novaRegraId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const novaRegra = {
+        id: novaRegraId,
+        palavrasChave: extrairPalavrasChave(linha.historico),
+        contaDestino,
+        tipo: linha.tipo,
+        prioridade: 50,
+        ativo: true,
+      } as import('@/lib/api').RegraClassificacao;
+
+      alvo.regrasClassificacao = [...(alvo.regrasClassificacao || []), novaRegra];
+      const salvo = await saveConfiguracoes({ ...config, contasBancarias: bancos });
+      setImportBancos((salvo.contasBancarias || []) as ContaBancariaImportacao[]);
+      setImportErro('');
+      // Reprocessa sugestões com novas regras mantendo overrides
+      const layoutEscolhido = alvo.layoutsCsv?.find(l => l.id === importLayoutId);
+      if (layoutEscolhido && importTextoCsv) {
+        atualizarPreviewImportacao(importTextoCsv, alvo, layoutEscolhido);
+      }
+    } catch (e) {
+      console.error(e);
+      setImportErro('Falha ao salvar regra.');
+    }
   };
 
   const processarArquivoImportacao = async (file: File) => {
@@ -1213,12 +1315,7 @@ export default function Lancamentos() {
       return;
     }
 
-    const contaReceitaFinal = bancoSelecionadoImport?.contaPadraoReceita;
-    const contaDespesaFinal = bancoSelecionadoImport?.contaPadraoDespesa;
-    if (!contaReceitaFinal || !contaDespesaFinal) {
-      setImportErro('Configure as contas padrão (receita/despesa) desta conta em “Configuração de Bancos”.');
-      return;
-    }
+    // Permite seguir sem contas padrão, desde que linhas estejam resolvidas
 
     if (importPreview.length === 0) {
       setImportErro('Envie um arquivo CSV com colunas: data, descrição, valor, tipo (opcional)');
@@ -1230,20 +1327,31 @@ export default function Lancamentos() {
       const agora = Date.now();
       const isoAgora = new Date().toISOString();
       const contaBancoNome = obterNomeConta(importContaBanco);
-      const contaReceitaNome = obterNomeConta(contaReceitaFinal);
-      const contaDespesaNome = obterNomeConta(contaDespesaFinal);
+      const contaReceitaNome = bancoSelecionadoImport?.contaPadraoReceita ? obterNomeConta(bancoSelecionadoImport.contaPadraoReceita) : '';
+      const contaDespesaNome = bancoSelecionadoImport?.contaPadraoDespesa ? obterNomeConta(bancoSelecionadoImport.contaPadraoDespesa) : '';
 
-      const novosLancamentos = importPreview.map((reg, idx) => {
+      const novosLancamentos = importPreview.filter(reg => !reg.ignorar).map((reg, idx) => {
         const ehEntrada = reg.tipo === 'entrada';
         const valor = Math.abs(reg.valor);
         
-        // Usa conta sugerida se disponível e com alta confiança, senão usa padrão
-        let contaClassificacao = ehEntrada ? contaReceitaFinal : contaDespesaFinal;
-        let contaClassificacaoNome = ehEntrada ? contaReceitaNome : contaDespesaNome;
-        
-        if (reg.contaSugerida && (reg.confianca || 0) >= 70) {
+        // Determina conta de classificação: prioridade contaFinal, senão sugestão forte, senão padrão do banco
+        let contaClassificacao = reg.contaFinal;
+        let contaClassificacaoNome = reg.contaFinalNome || (contaClassificacao ? obterNomeConta(contaClassificacao) : '');
+
+        if (!contaClassificacao && reg.contaSugerida && (reg.confianca || 0) >= 70) {
           contaClassificacao = reg.contaSugerida;
           contaClassificacaoNome = reg.contaSugeridaNome || obterNomeConta(reg.contaSugerida);
+        }
+
+        if (!contaClassificacao) {
+          const padrao = ehEntrada ? bancoSelecionadoImport?.contaPadraoReceita : bancoSelecionadoImport?.contaPadraoDespesa;
+          const padraoNome = ehEntrada ? contaReceitaNome : contaDespesaNome;
+          if (padrao) {
+            contaClassificacao = padrao;
+            contaClassificacaoNome = padraoNome || obterNomeConta(padrao);
+          } else {
+            throw new Error('Linha pendente sem conta definida e sem padrão disponível.');
+          }
         }
         
         const debitoConta = ehEntrada ? importContaBanco : contaClassificacao;
@@ -1945,14 +2053,14 @@ export default function Lancamentos() {
 
       {/* Modal de Importação de Extrato */}
       {importModalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full my-auto max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl my-4 md:my-auto max-h-[90vh] md:max-h-[95vh] flex flex-col">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
               <h3 className="text-xl font-semibold text-gray-800">Importar extrato bancário (CSV)</h3>
               <p className="text-sm text-gray-600 mt-1">A detecção do banco/layout é feita pelo cabeçalho configurado em <code>Configuração de Bancos</code>.</p>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="flex-1 p-4 md:p-6 space-y-4 overflow-y-auto">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Arquivo CSV</label>
                 <input
@@ -2009,81 +2117,157 @@ export default function Lancamentos() {
               )}
 
               {importEtapa === 'detalhes' && importPreview.length > 0 && (
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="px-4 py-2 bg-gray-50 text-sm font-medium text-gray-700">
-                    Pré-visualização com classificação inteligente (primeiras 10 linhas)
+                <div className="border border-gray-200 rounded-lg p-3 bg-white space-y-3">
+                  {/* Status Summary */}
+                  <div className="grid grid-cols-4 gap-2 px-2 py-2 bg-gray-50 rounded">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{importPreview.length}</div>
+                      <div className="text-xs text-gray-600">Total</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{importPreview.filter(l => !l.ignorar && !!l.contaFinal).length}</div>
+                      <div className="text-xs text-gray-600">Resolvidas</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">{importPreview.filter(l => !l.ignorar && !(!!l.contaFinal || (!!l.contaSugerida && (l.confianca || 0) >= 70))).length}</div>
+                      <div className="text-xs text-gray-600">Pendentes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-600">{importPreview.filter(l => l.ignorar).length}</div>
+                      <div className="text-xs text-gray-600">Ignoradas</div>
+                    </div>
                   </div>
-                  <div className="max-h-96 overflow-auto">
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button onClick={selecionarPendentes} className="px-3 py-1 text-xs border rounded">Selecionar pendentes</button>
+                    <button onClick={aceitarSugestoesSelecionados} className="px-3 py-1 text-xs border rounded">Aceitar sugestões</button>
+                    <button onClick={ignorarSelecionados} className="px-3 py-1 text-xs border rounded">Ignorar selecionadas</button>
+                    <div className="flex items-center gap-2">
+                      <select value={bulkContaCodigo} onChange={(e) => setBulkContaCodigo(e.target.value)} className="text-xs border rounded px-2 py-1">
+                        <option value="">Conta para aplicar…</option>
+                        {contasAnaliticas
+                          .filter(c => {
+                            const entradas = importPreview.some(l => l.selecionado && l.tipo === 'entrada');
+                            const saidas = importPreview.some(l => l.selecionado && l.tipo === 'saida');
+                            if (entradas && !saidas) return c.codigo.startsWith('4.');
+                            if (saidas && !entradas) return c.codigo.startsWith('5.');
+                            return c.codigo.startsWith('4.') || c.codigo.startsWith('5.');
+                          })
+                          .map(c => (
+                            <option key={c.codigo} value={c.codigo}>{c.codigo} — {c.nome}</option>
+                          ))}
+                      </select>
+                      <button onClick={() => bulkContaCodigo && aplicarContaSelecionados(bulkContaCodigo)} className="px-3 py-1 text-xs border rounded">Aplicar às selecionadas</button>
+                    </div>
+                    <a href="/configuracao-bancos" className="ml-auto text-xs text-blue-600 hover:underline">Abrir Configuração de Bancos</a>
+                  </div>
+
+                  <div className="border rounded">
+                    <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
+                      <span className="text-xs text-gray-600">Exibindo {Math.min((importPaginaAtual - 1) * importLinhasPorPagina + 1, importPreview.length)}-{Math.min(importPaginaAtual * importLinhasPorPagina, importPreview.length)} de {importPreview.length}</span>
+                      <select value={importLinhasPorPagina} onChange={(e) => { setImportLinhasPorPagina(Number(e.target.value)); setImportPaginaAtual(1); }} className="text-xs border rounded px-2 py-1">
+                        <option value={10}>10 linhas</option>
+                        <option value={25}>25 linhas</option>
+                        <option value={50}>50 linhas</option>
+                        <option value={100}>100 linhas</option>
+                      </select>
+                    </div>
                     <table className="w-full text-left text-sm">
                       <thead className="bg-gray-100 text-gray-700 sticky top-0">
                         <tr>
-                          <th className="px-3 py-2">Data</th>
-                          <th className="px-3 py-2">Histórico</th>
-                          <th className="px-3 py-2 text-right">Valor</th>
-                          <th className="px-3 py-2">Tipo</th>
-                          <th className="px-3 py-2">Classificação Sugerida</th>
+                          <th className="px-2 py-2 w-8">S</th>
+                          <th className="px-2 py-2 w-8">I</th>
+                          <th className="px-2 py-2 w-16">Data</th>
+                          <th className="px-2 py-2 min-w-max">Histórico</th>
+                          <th className="px-2 py-2 text-right w-16">Valor</th>
+                          <th className="px-2 py-2 w-12">Tipo</th>
+                          <th className="px-2 py-2 min-w-max">Sugestão</th>
+                          <th className="px-2 py-2 min-w-max">Conta Final</th>
+                          <th className="px-2 py-2 w-14">Regra</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {importPreview.slice(0, 10).map((linha, idx) => {
+                        {importPreview.slice((importPaginaAtual - 1) * importLinhasPorPagina, importPaginaAtual * importLinhasPorPagina).map((linha) => {
                           const confiancaCor = 
                             !linha.confianca ? 'bg-gray-100 text-gray-600' :
-                            linha.confianca >= 90 ? 'bg-green-100 text-green-800 border-green-300' :
-                            linha.confianca >= 70 ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                            (linha.confianca as number) >= 90 ? 'bg-green-100 text-green-800 border-green-300' :
+                            (linha.confianca as number) >= 70 ? 'bg-blue-100 text-blue-800 border-blue-300' :
                             'bg-yellow-100 text-yellow-800 border-yellow-300';
-                          
                           const confiancaIcone = 
                             !linha.confianca ? '❓' :
-                            linha.confianca >= 90 ? '✅' :
-                            linha.confianca >= 70 ? '🎯' : '⚠️';
-                          
+                            (linha.confianca as number) >= 90 ? '✅' :
+                            (linha.confianca as number) >= 70 ? '🎯' : '⚠️';
                           return (
-                            <tr key={`${linha.data}-${idx}`} className="border-t border-gray-100 hover:bg-gray-50">
-                              <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{linha.data}</td>
-                              <td className="px-3 py-2 text-gray-700">{linha.historico}</td>
-                              <td className="px-3 py-2 text-gray-700 text-right font-medium">R$ {linha.valor.toFixed(2)}</td>
-                              <td className="px-3 py-2">
+                            <tr key={linha.id} className="border-t border-gray-100 hover:bg-gray-50 text-xs">
+                              <td className="px-2 py-2 text-center">
+                                <input type="checkbox" checked={!!linha.selecionado} onChange={(e) => atualizarLinhaPreview(linha.id, { selecionado: e.target.checked })} />
+                              </td>
+                              <td className="px-2 py-2 text-center">
+                                <input type="checkbox" checked={!!linha.ignorar} onChange={(e) => atualizarLinhaPreview(linha.id, { ignorar: e.target.checked })} />
+                              </td>
+                              <td className="px-2 py-2 text-gray-700 whitespace-nowrap">{linha.data}</td>
+                              <td className="px-2 py-2 text-gray-700 truncate max-w-[200px]" title={linha.historico}>{linha.historico}</td>
+                              <td className="px-2 py-2 text-gray-700 text-right font-medium">R$ {linha.valor.toFixed(2)}</td>
+                              <td className="px-2 py-2">
                                 <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                                   linha.tipo === 'entrada' 
                                     ? 'bg-green-100 text-green-700 border border-green-200' 
                                     : 'bg-red-100 text-red-700 border border-red-200'
                                 }`}>
-                                  {linha.tipo === 'entrada' ? '↗ Entrada' : '↙ Saída'}
+                                  {linha.tipo === 'entrada' ? '↗' : '↙'}
                                 </span>
                               </td>
-                              <td className="px-3 py-2">
+                              <td className="px-2 py-2">
                                 {linha.contaSugerida ? (
-                                  <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
                                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${confiancaCor}`}>
                                       <span>{confiancaIcone}</span>
                                       <span className="font-mono">{linha.contaSugeridaNome}</span>
                                     </span>
-                                    <span className="text-xs text-gray-500">
-                                      {linha.razaoSugestao} ({linha.confianca}% confiança)
-                                    </span>
+                                    <button
+                                      className="px-2 py-1 text-xs border rounded"
+                                      onClick={() => atualizarLinhaPreview(linha.id, {
+                                        contaFinal: linha.contaSugerida,
+                                        contaFinalNome: linha.contaSugeridaNome || obterNomeConta(linha.contaSugerida as string)
+                                      })}
+                                    >Aceitar</button>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-400 italic">Usar conta padrão</span>
+                                  <span className="text-xs text-gray-400 italic">Sem sugestão</span>
                                 )}
+                              </td>
+                              <td className="px-2 py-2">
+                                <select
+                                  value={linha.contaFinal || ''}
+                                  onChange={(e) => atualizarLinhaPreview(linha.id, { contaFinal: e.target.value, contaFinalNome: obterNomeConta(e.target.value) })}
+                                  className="border border-gray-300 rounded px-2 py-1 text-xs whitespace-nowrap"
+                                >
+                                  <option value="">Selecionar conta…</option>
+                                  {contasAnaliticas
+                                    .filter(c => linha.tipo === 'entrada' ? c.codigo.startsWith('4.') : c.codigo.startsWith('5.'))
+                                    .map(c => (
+                                      <option key={c.codigo} value={c.codigo}>{c.codigo} — {c.nome}</option>
+                                    ))}
+                                </select>
+                              </td>
+                              <td className="px-2 py-2">
+                                <button className="px-2 py-1 text-xs border rounded" onClick={() => salvarRegraParaLinha(linha.id)}>Salvar regra</button>
                               </td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
-                  </div>
-                  <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
-                    <div className="flex gap-4">
-                      <span>✅ Alta confiança (90%+)</span>
-                      <span>🎯 Boa confiança (70-89%)</span>
-                      <span>⚠️ Baixa confiança (&lt;70%)</span>
-                      <span>❓ Sem sugestão</span>
+                    <div className="flex items-center justify-center gap-1 px-3 py-2 bg-gray-50 border-t">
+                      <button onClick={() => setImportPaginaAtual(Math.max(1, importPaginaAtual - 1))} disabled={importPaginaAtual === 1} className="px-2 py-1 text-xs border rounded disabled:opacity-50">←</button>
+                      <span className="text-xs text-gray-700">Página <span className="font-bold">{importPaginaAtual}</span> de <span className="font-bold">{Math.ceil(importPreview.length / importLinhasPorPagina)}</span></span>
+                      <button onClick={() => setImportPaginaAtual(Math.min(Math.ceil(importPreview.length / importLinhasPorPagina), importPaginaAtual + 1))} disabled={importPaginaAtual === Math.ceil(importPreview.length / importLinhasPorPagina)} className="px-2 py-1 text-xs border rounded disabled:opacity-50">→</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="sticky bottom-0 flex justify-end gap-3 p-4 md:p-6 border-t border-gray-200 bg-white">
                 <button
                   onClick={() => {
                     setImportModalAberto(false);
@@ -2094,6 +2278,9 @@ export default function Lancamentos() {
                     setImportLayoutId('');
                     setImportContaBanco('');
                     setImportPreview([]);
+                    setImportErro('');
+                    setImportResumo({ sucesso: 0, erros: 0 });
+                    setImportPaginaAtual(1);
                     setImportErro('');
                     setImportResumo({ sucesso: 0, erros: 0 });
                   }}
