@@ -16,6 +16,7 @@ import {
   type ContaBancaria as ContaBancariaAPI,
   type AutoPatternConfig,
   type ContaBancariaImportacao,
+  type CsvCampoPadrao,
   type CsvLayoutConfig,
 } from '@/lib/api';
 import { obterInformacoesPadrao, obterCorPadrao, type TipoOperacao } from '@/lib/padroes-contabeis';
@@ -720,8 +721,14 @@ export default function Lancamentos() {
       if (idx >= 0) indices[campo] = idx;
     });
 
-    const obrigatorios = (layout.camposObrigatorios || []) as Array<'data' | 'historico' | 'valor' | 'identificador'>;
-    const ok = obrigatorios.every((c) => typeof (indices as any)[c] === 'number');
+    const obrigatorios = (layout.camposObrigatorios || []) as CsvCampoPadrao[];
+    const ok = obrigatorios.every((c) => {
+      if (c === 'tipo') {
+        // Se não houver coluna de tipo, inferimos pelo sinal do valor.
+        return typeof indices.tipo === 'number' || typeof indices.valor === 'number';
+      }
+      return typeof (indices as any)[c] === 'number';
+    });
     return { ok, indices };
   };
 

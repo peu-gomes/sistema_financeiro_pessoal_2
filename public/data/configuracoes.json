@@ -23,7 +23,7 @@
         {
           "id": "nubank-cc-layout-1",
           "nome": "Padrão (Data, Valor, Identificador, Descrição)",
-          "camposObrigatorios": ["data", "valor", "historico"],
+          "camposObrigatorios": ["data", "valor", "historico", "tipo"],
           "aliases": {
             "data": ["data"],
             "valor": ["valor"],
@@ -48,7 +48,7 @@
         {
           "id": "nubank-cartao-layout-1",
           "nome": "Padrão (date, title, amount)",
-          "camposObrigatorios": ["data", "valor", "historico"],
+          "camposObrigatorios": ["data", "valor", "historico", "tipo"],
           "aliases": {
             "data": ["date", "data"],
             "historico": ["title", "descrição", "descricao"],

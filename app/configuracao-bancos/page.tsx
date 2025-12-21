@@ -44,8 +44,13 @@ export default function ConfiguracaoBancos() {
     setDirty(false);
   }, [bancoSelecionado]);
 
-  const camposCsv: CsvCampoPadrao[] = ['data', 'historico', 'valor', 'identificador', 'tipo'];
-  const camposObrigatoriosBase: Array<Exclude<CsvCampoPadrao, 'tipo'>> = ['data', 'historico', 'valor'];
+  const camposCsv: CsvCampoPadrao[] = ['data', 'historico', 'valor', 'tipo', 'identificador'];
+  const camposObrigatoriosBase: CsvCampoPadrao[] = ['data', 'historico', 'valor', 'tipo'];
+
+  const limparOpcional = (valor?: string) => {
+    const v = (valor || '').trim();
+    return v ? v : undefined;
+  };
 
   const normalizarLista = (raw: string) =>
     raw
@@ -70,8 +75,8 @@ export default function ConfiguracaoBancos() {
       contaNome: '',
       ativa: true,
       padrao: false,
-      contaPadraoReceita: '',
-      contaPadraoDespesa: '',
+      contaPadraoReceita: undefined,
+      contaPadraoDespesa: undefined,
       layoutsCsv: [
         {
           id: `csv-${Date.now()}`,
@@ -81,6 +86,7 @@ export default function ConfiguracaoBancos() {
             data: ['data'],
             historico: ['descricao', 'descrição'],
             valor: ['valor'],
+            tipo: ['tipo'],
           },
         },
       ],
@@ -104,16 +110,29 @@ export default function ConfiguracaoBancos() {
       return;
     }
 
-    const layoutsCsv = (draft.layoutsCsv || []).map((l) => {
-      const obrigatorios = (l.camposObrigatorios || []).filter(Boolean);
+    const layoutsOriginais = draft.layoutsCsv || [];
+    if (layoutsOriginais.some((l) => !(l.nome || '').trim())) {
+      alert('Todo layout CSV precisa ter um nome.');
+      return;
+    }
+
+    const layoutsCsv = layoutsOriginais.map((l) => {
+      const obrigatorios = (l.camposObrigatorios || []).filter(Boolean) as CsvCampoPadrao[];
       const normalizados = obrigatorios.length ? obrigatorios : [...camposObrigatoriosBase];
-      return { ...l, camposObrigatorios: Array.from(new Set(normalizados)) };
+      // Campos mínimos esperados em qualquer importação.
+      const finalObrigatorios = Array.from(new Set([...camposObrigatoriosBase, ...normalizados]));
+      return { ...l, nome: (l.nome || '').trim(), camposObrigatorios: finalObrigatorios };
     });
 
     const draftNormalizado: ContaBancariaImportacao = {
       ...draft,
       layoutsCsv,
       regrasClassificacao: draft.regrasClassificacao || [],
+      banco: limparOpcional(draft.banco),
+      agencia: limparOpcional(draft.agencia),
+      numeroConta: limparOpcional(draft.numeroConta),
+      contaPadraoReceita: limparOpcional(draft.contaPadraoReceita),
+      contaPadraoDespesa: limparOpcional(draft.contaPadraoDespesa),
     };
 
     const atualizados = bancos.map((b) => (b.id === draftNormalizado.id ? draftNormalizado : b));
@@ -141,6 +160,25 @@ export default function ConfiguracaoBancos() {
       setSalvando(true);
       await salvarBancos(atualizados);
       setSelecionadoId(atualizados[0]?.id || null);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao remover banco.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleExcluirId = async (id: string) => {
+    const alvo = bancos.find((b) => b.id === id);
+    if (!alvo) return;
+    if (!confirm(`Remover "${alvo.nome}"?`)) return;
+    const atualizados = bancos.filter((b) => b.id !== id);
+    try {
+      setSalvando(true);
+      await salvarBancos(atualizados);
+      if (selecionadoId === id) {
+        setSelecionadoId(atualizados[0]?.id || null);
+      }
     } catch (e) {
       console.error(e);
       alert('Erro ao remover banco.');
@@ -256,27 +294,55 @@ export default function ConfiguracaoBancos() {
               
               <div className="divide-y divide-gray-200">
                 {bancos.map((banco) => (
-                  <button
+                  <div
                     key={banco.id}
-                    onClick={() => {
-                      setSelecionadoId(banco.id);
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelecionadoId(banco.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') setSelecionadoId(banco.id);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${
+                    className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors cursor-pointer ${
                       selecionadoId === banco.id ? 'bg-blue-100 border-l-4 border-blue-600' : ''
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="font-medium text-gray-900">{banco.nome}</div>
                         <div className="text-sm text-gray-500">{banco.contaCodigo}</div>
                       </div>
-                      {banco.padrao && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">
-                          Padrão
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {banco.padrao && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">
+                            Padrão
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelecionadoId(banco.id);
+                          }}
+                          className="px-2 py-1 text-xs font-medium border border-gray-300 rounded hover:bg-white"
+                          title="Editar"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleExcluirId(banco.id);
+                          }}
+                          disabled={salvando}
+                          className="px-2 py-1 text-xs font-medium border border-red-300 text-red-700 rounded hover:bg-red-50 disabled:opacity-60"
+                          title="Excluir"
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
                 {bancos.length === 0 && (
                   <div className="p-4 text-sm text-gray-600">
@@ -305,6 +371,22 @@ export default function ConfiguracaoBancos() {
                 </div>
 
                 <div className="p-6 space-y-4">
+                  {dirty && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
+                        Alterações não salvas
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSalvar}
+                        disabled={salvando}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold"
+                      >
+                        {salvando ? 'Salvando...' : 'Salvar alterações'}
+                      </button>
+                    </div>
+                  )}
                   {/* Informações Básicas */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -439,7 +521,7 @@ export default function ConfiguracaoBancos() {
                             id: `csv-${Date.now()}`,
                             nome: 'Novo layout',
                             camposObrigatorios: [...camposObrigatoriosBase],
-                            aliases: { data: ['data'], historico: ['descricao', 'descrição'], valor: ['valor'] },
+                            aliases: { data: ['data'], historico: ['descricao', 'descrição'], valor: ['valor'], tipo: ['tipo'] },
                           };
                           atualizarDraft({ layoutsCsv: [...(draft.layoutsCsv || []), novo] });
                         }}
@@ -477,7 +559,7 @@ export default function ConfiguracaoBancos() {
                                   <div>
                                     <label className="block text-xs font-medium text-gray-700 mb-1">Campos obrigatórios (p/ bater no header)</label>
                                     <div className="flex flex-wrap gap-3 pt-1">
-                                      {(['data', 'historico', 'valor', 'identificador'] as Array<Exclude<CsvCampoPadrao, 'tipo'>>).map((campo) => (
+                                      {(['data', 'historico', 'valor', 'tipo', 'identificador'] as CsvCampoPadrao[]).map((campo) => (
                                         <label key={campo} className="inline-flex items-center gap-2 text-sm text-gray-700">
                                           <input
                                             type="checkbox"
@@ -496,6 +578,9 @@ export default function ConfiguracaoBancos() {
                                         </label>
                                       ))}
                                     </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      Campos mínimos sempre incluem: <span className="font-mono">data</span>, <span className="font-mono">historico</span>, <span className="font-mono">valor</span>, <span className="font-mono">tipo</span>.
+                                    </p>
                                   </div>
                                 </div>
 

@@ -20,7 +20,7 @@ export interface CsvLayoutConfig {
   id: string;
   nome: string;
   /** Campos mínimos para considerar o layout compatível com o cabeçalho do CSV */
-  camposObrigatorios: Array<Exclude<CsvCampoPadrao, 'tipo'>>;
+  camposObrigatorios: CsvCampoPadrao[];
   /** Aliases por campo (comparação é normalizada: lower + sem acentos) */
   aliases: Partial<Record<CsvCampoPadrao, string[]>>;
 }
