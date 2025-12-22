@@ -744,9 +744,10 @@ const LinhaConta = ({
 }: any) => {
   const temSubcontas = conta.subcontas && conta.subcontas.length > 0;
   const expanded = expandidos[conta.id] !== false;
-  const nivelCodigo = getNivelCodigo(conta.codigo);
-  const nivelMaximo = mascara.split('.').length - 1;
-  const podeAdicionarSubcontas = conta.tipoCC === 'sintetica' && nivelCodigo < nivelMaximo;
+  const nivelCodigoParts = conta.codigo.split('.').length;
+  const nivelMaximoParts = mascara.split('.').length;
+  const tipoCCRender: 'sintetica' | 'analitica' = nivelCodigoParts === nivelMaximoParts ? 'analitica' : 'sintetica';
+  const podeAdicionarSubcontas = tipoCCRender === 'sintetica' && nivelCodigoParts < nivelMaximoParts;
   const isPreview = (conta as any).isPreview;
 
   return (
@@ -792,7 +793,7 @@ const LinhaConta = ({
                 )}
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <BadgeTipoConta tipo={conta.tipoCC} />
+                <BadgeTipoConta tipo={tipoCCRender} />
               </div>
             </div>
           </div>
@@ -1326,8 +1327,8 @@ export default function PlanoDeContas() {
 
     // Determina tipoCC automaticamente pela máscara
     const mascaraConfig = configuracoes?.mascaraContas || getMascaraPadrao().mascara;
-    const nivelCodigo = getNivelCodigo(codigo);
-    const nivelMaximo = mascaraConfig.split('.').length - 1;
+    const nivelCodigo = codigo.split('.').length;
+    const nivelMaximo = mascaraConfig.split('.').length;
     const tipoCC = nivelCodigo === nivelMaximo ? 'analitica' : 'sintetica';
     const novaConta: ContaBancaria = {
       id: novoId,
