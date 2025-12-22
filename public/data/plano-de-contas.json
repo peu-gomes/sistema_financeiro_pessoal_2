@@ -77,10 +77,20 @@
                 {
                   "id": "3-999",
                   "codigo": "3.999",
-                  "nome": "Sem Categorização (Receita)",
-                  "tipoCC": "analitica",
+                  "nome": "Sem Categorização",
+                  "tipoCC": "sintetica",
                   "categoria": "receita",
-                  "ativa": true
+                  "ativa": true,
+                  "subcontas": [
+                    {
+                      "id": "3-999-01",
+                      "codigo": "3.999.01",
+                      "nome": "Sem Categorização (Receita)",
+                      "tipoCC": "analitica",
+                      "categoria": "receita",
+                      "ativa": true
+                    }
+                  ]
                 }
             {
               "id": "1-1-02",
@@ -1055,10 +1065,20 @@
         {
           "id": "4-999",
           "codigo": "4.999",
-          "nome": "Sem Categorização (Despesa)",
-          "tipoCC": "analitica",
+          "nome": "Sem Categorização",
+          "tipoCC": "sintetica",
           "categoria": "despesa",
-          "ativa": true
+          "ativa": true,
+          "subcontas": [
+            {
+              "id": "4-999-01",
+              "codigo": "4.999.01",
+              "nome": "Sem Categorização (Despesa)",
+              "tipoCC": "analitica",
+              "categoria": "despesa",
+              "ativa": true
+            }
+          ]
         }
       ]
     }
