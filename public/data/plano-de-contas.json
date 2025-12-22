@@ -307,45 +307,15 @@
             {
               "id": "3-1-01",
               "codigo": "3.1.01",
-              "nome": "Salário CLT",
+              "nome": "Remuneração CLT",
               "tipoCC": "sintetica",
               "categoria": "receita",
               "ativa": true,
               "subcontas": [
-                { "id": "3-1-01-001", "codigo": "3.1.01.001", "nome": "Salário CLT", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
-              ]
-            },
-            {
-              "id": "3-1-02",
-              "codigo": "3.1.02",
-              "nome": "13º Salário",
-              "tipoCC": "sintetica",
-              "categoria": "receita",
-              "ativa": true,
-              "subcontas": [
-                { "id": "3-1-02-001", "codigo": "3.1.02.001", "nome": "13º Salário", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
-              ]
-            },
-            {
-              "id": "3-1-03",
-              "codigo": "3.1.03",
-              "nome": "Férias",
-              "tipoCC": "sintetica",
-              "categoria": "receita",
-              "ativa": true,
-              "subcontas": [
-                { "id": "3-1-03-001", "codigo": "3.1.03.001", "nome": "Férias", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
-              ]
-            },
-            {
-              "id": "3-1-04",
-              "codigo": "3.1.04",
-              "nome": "Horas Extras",
-              "tipoCC": "sintetica",
-              "categoria": "receita",
-              "ativa": true,
-              "subcontas": [
-                { "id": "3-1-04-001", "codigo": "3.1.04.001", "nome": "Horas Extras", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+                { "id": "3-1-01-001", "codigo": "3.1.01.001", "nome": "Salário CLT", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-002", "codigo": "3.1.01.002", "nome": "13º Salário", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-003", "codigo": "3.1.01.003", "nome": "Férias", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-004", "codigo": "3.1.01.004", "nome": "Horas Extras", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
               ]
             }
           ]
