@@ -744,7 +744,7 @@ const LinhaConta = ({
 }: any) => {
   const temSubcontas = conta.subcontas && conta.subcontas.length > 0;
   const expanded = expandidos[conta.id] !== false;
-  const podeAdicionarSubcontas = conta.tipoCC === 'sintetica';
+  const podeAdicionarSubcontas = conta.tipoCC === 'sintetica' && !isCodigoCompleto(conta.codigo, mascara);
   const isPreview = (conta as any).isPreview;
 
   return (
