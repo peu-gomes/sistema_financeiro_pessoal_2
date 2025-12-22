@@ -1319,11 +1319,14 @@ export default function PlanoDeContas() {
     const novoId = `conta-${contadorId}`;
     setContadorId(prev => prev + 1);
 
+    // Determina tipoCC automaticamente pela máscara
+    const mascaraConfig = configuracoes?.mascaraContas || getMascaraPadrao().mascara;
+    const tipoCC = isCodigoCompleto(codigo) ? 'analitica' : 'sintetica';
     const novaConta: ContaBancaria = {
       id: novoId,
       codigo,
       nome,
-      tipoCC: 'analitica', // novas contas começam como analíticas
+      tipoCC,
       categoria: contaSelecionada.categoria,
       ativa: true
     };

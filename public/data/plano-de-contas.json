@@ -28,7 +28,7 @@
                   "id": "1-1-01-001",
                   "codigo": "1.1.01.001",
                   "nome": "Caixa",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -36,7 +36,7 @@
                   "id": "1-1-01-002",
                   "codigo": "1.1.01.002",
                   "nome": "Banco Itaú - Conta Corrente",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -44,7 +44,7 @@
                   "id": "1-1-01-003",
                   "codigo": "1.1.01.003",
                   "nome": "Banco Bradesco - Conta Corrente",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -60,7 +60,7 @@
                       "id": "3-4-01",
                       "codigo": "3.4.01",
                       "nome": "Rendimentos de Poupança",
-                      "tipoCC": "analitica",
+                      "tipoCC": "sintetica",
                       "categoria": "receita",
                       "ativa": true
                     },
@@ -68,7 +68,7 @@
                       "id": "3-4-02",
                       "codigo": "3.4.02",
                       "nome": "Rendimentos de Investimentos",
-                      "tipoCC": "analitica",
+                      "tipoCC": "sintetica",
                       "categoria": "receita",
                       "ativa": true
                     }
@@ -86,7 +86,7 @@
                       "id": "3-999-01",
                       "codigo": "3.999.01",
                       "nome": "Sem Categorização (Receita)",
-                      "tipoCC": "analitica",
+                      "tipoCC": "sintetica",
                       "categoria": "receita",
                       "ativa": true
                     }
@@ -104,7 +104,7 @@
                   "id": "1-1-02-001",
                   "codigo": "1.1.02.001",
                   "nome": "Tesouro Direto",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -112,7 +112,7 @@
                   "id": "1-1-02-002",
                   "codigo": "1.1.02.002",
                   "nome": "CDB",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -120,7 +120,7 @@
                   "id": "1-1-02-003",
                   "codigo": "1.1.02.003",
                   "nome": "Fundos de Investimento",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -128,7 +128,7 @@
                   "id": "1-1-02-004",
                   "codigo": "1.1.02.004",
                   "nome": "Ações",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 }
@@ -146,7 +146,7 @@
                   "id": "1-1-03-001",
                   "codigo": "1.1.03.001",
                   "nome": "Empréstimos a Familiares",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -154,7 +154,7 @@
                   "id": "1-1-03-002",
                   "codigo": "1.1.03.002",
                   "nome": "Empréstimos a Terceiros",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 }
@@ -182,7 +182,7 @@
                   "id": "1-2-01-001",
                   "codigo": "1.2.01.001",
                   "nome": "Veículos",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 },
@@ -190,7 +190,7 @@
                   "id": "1-2-01-002",
                   "codigo": "1.2.01.002",
                   "nome": "Gado",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "ativo",
                   "ativa": true
                 }
@@ -228,7 +228,7 @@
                   "id": "2-1-01-001",
                   "codigo": "2.1.01.001",
                   "nome": "Cartão Itaú Mastercard",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "passivo",
                   "ativa": true
                 },
@@ -236,7 +236,7 @@
                   "id": "2-1-01-002",
                   "codigo": "2.1.01.002",
                   "nome": "Cartão Nubank",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "passivo",
                   "ativa": true
                 },
@@ -244,7 +244,7 @@
                   "id": "2-1-01-003",
                   "codigo": "2.1.01.003",
                   "nome": "Cartão Bradesco Visa",
-                  "tipoCC": "analitica",
+                  "tipoCC": "sintetica",
                   "categoria": "passivo",
                   "ativa": true
                 }
