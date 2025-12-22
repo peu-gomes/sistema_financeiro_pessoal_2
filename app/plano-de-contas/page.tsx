@@ -1085,6 +1085,7 @@ const buildPreviewFromSugestao = (
 // Página principal
 export default function PlanoDeContas() {
   const [contas, setContas] = useState<ContaBancaria[]>([]);
+  const [configuracoes, setConfiguracoes] = useState<any>(null);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [mascara, setMascara] = useState(getMascaraPadrao().mascara);
   const [modalAberto, setModalAberto] = useState(false);
@@ -1163,6 +1164,8 @@ export default function PlanoDeContas() {
 
         // Carregar configurações
         const config = await getConfiguracoes();
+
+        setConfiguracoes(config);
         setPermitirContasRaiz(config.permitirCriarContasRaiz);
 
         // Carregar ícones customizados
