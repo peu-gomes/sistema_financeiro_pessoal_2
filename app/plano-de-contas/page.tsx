@@ -1326,7 +1326,9 @@ export default function PlanoDeContas() {
 
     // Determina tipoCC automaticamente pela máscara
     const mascaraConfig = configuracoes?.mascaraContas || getMascaraPadrao().mascara;
-    const tipoCC = isCodigoCompleto(codigo) ? 'analitica' : 'sintetica';
+    const nivelCodigo = getNivelCodigo(codigo);
+    const nivelMaximo = mascaraConfig.split('.').length - 1;
+    const tipoCC = nivelCodigo === nivelMaximo ? 'analitica' : 'sintetica';
     const novaConta: ContaBancaria = {
       id: novoId,
       codigo,
