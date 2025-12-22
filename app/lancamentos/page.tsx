@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import AutocompleteComboBox from '@/components/AutocompleteComboBox';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
@@ -2278,18 +2279,13 @@ export default function Lancamentos() {
                                 )}
                               </td>
                               <td className="px-2 py-2">
-                                <select
+                                <AutocompleteComboBox
+                                  options={contasAnaliticas.map(c => ({ value: c.codigo, label: `${c.codigo} — ${c.nome}` }))}
                                   value={linha.contaFinal || ''}
-                                  onChange={(e) => atualizarLinhaPreview(linha.id, { contaFinal: e.target.value, contaFinalNome: obterNomeConta(e.target.value) })}
-                                  className="border border-gray-300 rounded px-2 py-1 text-xs whitespace-nowrap"
-                                >
-                                  <option value="">Selecionar conta…</option>
-                                  {contasAnaliticas
-                                    .filter(c => linha.tipo === 'entrada' ? c.codigo.startsWith('4.') : c.codigo.startsWith('5.'))
-                                    .map(c => (
-                                      <option key={c.codigo} value={c.codigo}>{c.codigo} — {c.nome}</option>
-                                    ))}
-                                </select>
+                                  onChange={(codigo, nome) => atualizarLinhaPreview(linha.id, { contaFinal: codigo, contaFinalNome: nome || obterNomeConta(codigo) })}
+                                  placeholder="Selecionar conta…"
+                                  className="text-xs"
+                                />
                               </td>
                               <td className="px-2 py-2">
                                 <button className="px-2 py-1 text-xs border rounded" onClick={() => salvarRegraParaLinha(linha.id)}>Salvar regra</button>

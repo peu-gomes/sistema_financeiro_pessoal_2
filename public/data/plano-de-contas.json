@@ -49,31 +49,39 @@
                   "ativa": true
                 },
                 {
-                  "id": "1-1-01-004",
-                  "codigo": "1.1.01.004",
-                  "nome": "Nubank - Conta Digital",
-                  "tipoCC": "analitica",
-                  "categoria": "ativo",
-                  "ativa": true
+                  "id": "3-4",
+                  "codigo": "3.4",
+                  "nome": "Receitas Financeiras",
+                  "tipoCC": "sintetica",
+                  "categoria": "receita",
+                  "ativa": true,
+                  "subcontas": [
+                    {
+                      "id": "3-4-01",
+                      "codigo": "3.4.01",
+                      "nome": "Rendimentos de Poupança",
+                      "tipoCC": "analitica",
+                      "categoria": "receita",
+                      "ativa": true
+                    },
+                    {
+                      "id": "3-4-02",
+                      "codigo": "3.4.02",
+                      "nome": "Rendimentos de Investimentos",
+                      "tipoCC": "analitica",
+                      "categoria": "receita",
+                      "ativa": true
+                    }
+                  ]
                 },
                 {
-                  "id": "1-1-01-005",
-                  "codigo": "1.1.01.005",
-                  "nome": "Poupança Itaú",
+                  "id": "3-999",
+                  "codigo": "3.999",
+                  "nome": "Sem Categorização (Receita)",
                   "tipoCC": "analitica",
-                  "categoria": "ativo",
-                  "ativa": true
-                },
-                {
-                  "id": "1-1-01-006",
-                  "codigo": "1.1.01.006",
-                  "nome": "Poupança Bradesco",
-                  "tipoCC": "analitica",
-                  "categoria": "ativo",
+                  "categoria": "receita",
                   "ativa": true
                 }
-              ]
-            },
             {
               "id": "1-1-02",
               "codigo": "1.1.02",
@@ -1043,6 +1051,14 @@
               "ativa": true
             }
           ]
+        },
+        {
+          "id": "4-999",
+          "codigo": "4.999",
+          "nome": "Sem Categorização (Despesa)",
+          "tipoCC": "analitica",
+          "categoria": "despesa",
+          "ativa": true
         }
       ]
     }
