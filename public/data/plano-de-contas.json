@@ -307,34 +307,16 @@
             {
               "id": "3-1-01",
               "codigo": "3.1.01",
-              "nome": "Salário CLT",
-              "tipoCC": "analitica",
+              "nome": "Remuneração CLT",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
-            },
-            {
-              "id": "3-1-02",
-              "codigo": "3.1.02",
-              "nome": "13º Salário",
-              "tipoCC": "analitica",
-              "categoria": "receita",
-              "ativa": true
-            },
-            {
-              "id": "3-1-03",
-              "codigo": "3.1.03",
-              "nome": "Férias",
-              "tipoCC": "analitica",
-              "categoria": "receita",
-              "ativa": true
-            },
-            {
-              "id": "3-1-04",
-              "codigo": "3.1.04",
-              "nome": "Horas Extras",
-              "tipoCC": "analitica",
-              "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-1-01-001", "codigo": "3.1.01.001", "nome": "Salário CLT", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-002", "codigo": "3.1.01.002", "nome": "13º Salário", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-003", "codigo": "3.1.01.003", "nome": "Férias", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-1-01-004", "codigo": "3.1.01.004", "nome": "Horas Extras", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             }
           ]
         },
@@ -349,18 +331,24 @@
             {
               "id": "3-2-01",
               "codigo": "3.2.01",
-              "nome": "Serviços Contábeis",
-              "tipoCC": "analitica",
+              "nome": "Serviços Profissionais",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-2-01-001", "codigo": "3.2.01.001", "nome": "Serviços Contábeis", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             },
             {
               "id": "3-2-02",
               "codigo": "3.2.02",
-              "nome": "Uber",
-              "tipoCC": "analitica",
+              "nome": "Transporte por Aplicativo",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-2-02-001", "codigo": "3.2.02.001", "nome": "Uber", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             }
           ]
         },
@@ -375,10 +363,13 @@
             {
               "id": "3-3-01",
               "codigo": "3.3.01",
-              "nome": "Venda de Gado",
-              "tipoCC": "analitica",
+              "nome": "Comercialização",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-3-01-001", "codigo": "3.3.01.001", "nome": "Venda de Gado", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             }
           ]
         },
@@ -393,26 +384,15 @@
             {
               "id": "3-4-01",
               "codigo": "3.4.01",
-              "nome": "Rendimentos de Poupança",
-              "tipoCC": "analitica",
+              "nome": "Aplicações Financeiras",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
-            },
-            {
-              "id": "3-4-02",
-              "codigo": "3.4.02",
-              "nome": "Rendimentos de Investimentos",
-              "tipoCC": "analitica",
-              "categoria": "receita",
-              "ativa": true
-            },
-            {
-              "id": "3-4-03",
-              "codigo": "3.4.03",
-              "nome": "Juros Recebidos",
-              "tipoCC": "analitica",
-              "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-4-01-001", "codigo": "3.4.01.001", "nome": "Rendimentos de Poupança", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-4-01-002", "codigo": "3.4.01.002", "nome": "Rendimentos de Investimentos", "tipoCC": "analitica", "categoria": "receita", "ativa": true },
+                { "id": "3-4-01-003", "codigo": "3.4.01.003", "nome": "Juros Recebidos", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             }
           ]
         },
@@ -428,10 +408,34 @@
               "id": "3-5-01",
               "codigo": "3.5.01",
               "nome": "Receitas Eventuais",
-              "tipoCC": "analitica",
+              "tipoCC": "sintetica",
               "categoria": "receita",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "3-5-01-001", "codigo": "3.5.01.001", "nome": "Receitas Eventuais", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+              ]
             }
+                  ,{
+                    "id": "3-9",
+                    "codigo": "3.9",
+                    "nome": "Receitas sem Categorização",
+                    "tipoCC": "sintetica",
+                    "categoria": "receita",
+                    "ativa": true,
+                    "subcontas": [
+                      {
+                        "id": "3-9-01",
+                        "codigo": "3.9.01",
+                        "nome": "Receitas Diversas",
+                        "tipoCC": "sintetica",
+                        "categoria": "receita",
+                        "ativa": true,
+                        "subcontas": [
+                          { "id": "3-9-01-001", "codigo": "3.9.01.001", "nome": "Receita sem categorização", "tipoCC": "analitica", "categoria": "receita", "ativa": true }
+                        ]
+                      }
+                    ]
+                  }
           ]
         }
       ]
@@ -1005,26 +1009,15 @@
             {
               "id": "4-3-01",
               "codigo": "4.3.01",
-              "nome": "Juros e Multas",
-              "tipoCC": "analitica",
+              "nome": "Encargos Financeiros",
+              "tipoCC": "sintetica",
               "categoria": "despesa",
-              "ativa": true
-            },
-            {
-              "id": "4-3-02",
-              "codigo": "4.3.02",
-              "nome": "Tarifas Bancárias",
-              "tipoCC": "analitica",
-              "categoria": "despesa",
-              "ativa": true
-            },
-            {
-              "id": "4-3-03",
-              "codigo": "4.3.03",
-              "nome": "IOF",
-              "tipoCC": "analitica",
-              "categoria": "despesa",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "4-3-01-001", "codigo": "4.3.01.001", "nome": "Juros e Multas", "tipoCC": "analitica", "categoria": "despesa", "ativa": true },
+                { "id": "4-3-01-002", "codigo": "4.3.01.002", "nome": "Tarifas Bancárias", "tipoCC": "analitica", "categoria": "despesa", "ativa": true },
+                { "id": "4-3-01-003", "codigo": "4.3.01.003", "nome": "IOF", "tipoCC": "analitica", "categoria": "despesa", "ativa": true }
+              ]
             }
           ]
         },
@@ -1039,27 +1032,37 @@
             {
               "id": "4-4-01",
               "codigo": "4.4.01",
-              "nome": "Presentes",
-              "tipoCC": "analitica",
+              "nome": "Despesas Pessoais e Sociais",
+              "tipoCC": "sintetica",
               "categoria": "despesa",
-              "ativa": true
-            },
-            {
-              "id": "4-4-02",
-              "codigo": "4.4.02",
-              "nome": "Doações",
-              "tipoCC": "analitica",
-              "categoria": "despesa",
-              "ativa": true
-            },
-            {
-              "id": "4-4-03",
-              "codigo": "4.4.03",
-              "nome": "Despesas Eventuais",
-              "tipoCC": "analitica",
-              "categoria": "despesa",
-              "ativa": true
+              "ativa": true,
+              "subcontas": [
+                { "id": "4-4-01-001", "codigo": "4.4.01.001", "nome": "Presentes", "tipoCC": "analitica", "categoria": "despesa", "ativa": true },
+                { "id": "4-4-01-002", "codigo": "4.4.01.002", "nome": "Doações", "tipoCC": "analitica", "categoria": "despesa", "ativa": true },
+                { "id": "4-4-01-003", "codigo": "4.4.01.003", "nome": "Despesas Eventuais", "tipoCC": "analitica", "categoria": "despesa", "ativa": true }
+              ]
             }
+                  ,{
+                    "id": "4-9",
+                    "codigo": "4.9",
+                    "nome": "Despesas sem Categorização",
+                    "tipoCC": "sintetica",
+                    "categoria": "despesa",
+                    "ativa": true,
+                    "subcontas": [
+                      {
+                        "id": "4-9-01",
+                        "codigo": "4.9.01",
+                        "nome": "Despesas Diversas",
+                        "tipoCC": "sintetica",
+                        "categoria": "despesa",
+                        "ativa": true,
+                        "subcontas": [
+                          { "id": "4-9-01-001", "codigo": "4.9.01.001", "nome": "Despesa sem categorização", "tipoCC": "analitica", "categoria": "despesa", "ativa": true }
+                        ]
+                      }
+                    ]
+                  }
           ]
         },
         {
