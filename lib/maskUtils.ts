@@ -17,32 +17,26 @@ export interface MascaraConfig {
 export function validarCodigo(codigo: string, mascara: string): boolean {
   // Remove espaços
   const codigoLimpo = codigo.trim();
-  
   // Separa mascara em partes
   const partesMascara = mascara.split('.');
   const partesCode = codigoLimpo.split('.');
-  
-  // Deve ter mesmo número de partes
-  if (partesMascara.length !== partesCode.length) {
+  // Permite códigos parciais: número de partes <= máscara
+  if (partesCode.length > partesMascara.length) {
     return false;
   }
-  
-  // Valida cada parte
-  for (let i = 0; i < partesMascara.length; i++) {
+  // Valida cada parte existente
+  for (let i = 0; i < partesCode.length; i++) {
     const tamMascara = partesMascara[i].length;
     const tamCode = partesCode[i].length;
-    
     // Deve ter mesmo tamanho (se máscara diz 99, deve ter 2 dígitos)
     if (tamCode !== tamMascara) {
       return false;
     }
-    
     // Deve ser números
     if (!/^\d+$/.test(partesCode[i])) {
       return false;
     }
   }
-  
   return true;
 }
 
