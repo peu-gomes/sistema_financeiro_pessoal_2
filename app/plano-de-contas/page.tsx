@@ -1647,6 +1647,26 @@ export default function PlanoDeContas() {
                     {!modoCompacto && 'Nova Conta Raiz'}
                   </button>
                 )}
+                {/* Botão de exportação */}
+                <div className="relative">
+                  <button
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 border border-gray-300"
+                    title="Exportar plano de contas"
+                    onClick={() => setShowExportMenu((v) => !v)}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v12m0 0l-4-4m4 4l4-4m-4 4V4" />
+                    </svg>
+                    Exportar
+                  </button>
+                  {showExportMenu && (
+                    <div className="absolute z-10 mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px]">
+                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm" onClick={exportarJSON}>Exportar JSON</button>
+                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm" onClick={exportarCSV}>Exportar CSV</button>
+                      <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm" onClick={exportarExcel}>Exportar Excel</button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1" />
               </div>
 
