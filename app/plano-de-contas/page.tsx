@@ -499,14 +499,15 @@ const ModalCriarConta = ({
       return;
     }
 
-    if (!codigo.trim() || !isCodigoCompleto(codigo)) {
-      setErro('Código deve estar completo');
+    if (!codigo.trim()) {
+      setErro('Código é obrigatório');
       return;
     }
 
     // Remove os _ para validar
     const codigoFinal = codigo.replace(/_/g, '');
 
+    // Permite códigos parciais válidos conforme a máscara
     if (!validarCodigo(codigoFinal, mascara)) {
       setErro(`Código não segue a máscara: ${mascara}`);
       return;
