@@ -36,8 +36,9 @@ export async function PUT(request: Request) {
     try {
       body = JSON.parse(bodyText);
     } catch (parseError) {
+      const errMsg = (parseError instanceof Error) ? parseError.message : String(parseError);
       console.error('[ERRO][PUT] Erro de parsing do JSON:', parseError, bodyText);
-      return NextResponse.json({ error: 'JSON inválido', details: parseError?.message }, { status: 400 });
+      return NextResponse.json({ error: 'JSON inválido', details: errMsg }, { status: 400 });
     }
     const contas: ContaBancaria[] = Array.isArray(body) ? body : body?.contas;
     if (!Array.isArray(contas)) {
