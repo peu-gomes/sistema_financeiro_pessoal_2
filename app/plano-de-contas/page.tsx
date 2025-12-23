@@ -1127,6 +1127,34 @@ export default function PlanoDeContas() {
   const [iconesCategoria, setIconesCategoria] = useState<Record<string, string>>({});
   const modoCompacto = useScrollCompact(150);
 
+  // Exporta o plano de contas como JSON
+  const exportarJSON = () => {
+    const dataStr = JSON.stringify(contas, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plano-de-contas.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  // Exporta o plano de contas como CSV (stub)
+  const exportarCSV = () => {
+    // TODO: Implementar exportação real para CSV
+    alert('Exportação para CSV ainda não implementada.');
+    setShowExportMenu(false);
+  };
+
+  // Exporta o plano de contas como Excel (stub)
+  const exportarExcel = () => {
+    // TODO: Implementar exportação real para Excel
+    alert('Exportação para Excel ainda não implementada.');
+    setShowExportMenu(false);
+  };
   const handleSelecionarSugestao = (id: string | null) => {
     if (!id) {
       setSugestaoSelecionadaId(null);
