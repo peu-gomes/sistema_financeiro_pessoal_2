@@ -1127,6 +1127,47 @@ export default function PlanoDeContas() {
   const [iconesCategoria, setIconesCategoria] = useState<Record<string, string>>({});
   const modoCompacto = useScrollCompact(150);
 
+  // Importação
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importData, setImportData] = useState<any>(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const importarContas = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const json = JSON.parse(evt.target?.result as string);
+        setImportData(json);
+        setShowImportConfirm(true);
+      } catch (err) {
+        alert('Arquivo inválido. Certifique-se de que é um JSON válido.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const confirmarImportacao = (sobrescrever: boolean) => {
+    if (!importData) return;
+    if (sobrescrever) {
+      setContas(importData);
+    } else {
+      // Mesclar: adiciona apenas contas novas (por código)
+      const codigosAtuais = new Set(contas.map((c) => c.codigo));
+      const novas = importData.filter((c: any) => !codigosAtuais.has(c.codigo));
+      setContas([...contas, ...novas]);
+    }
+    setShowImportConfirm(false);
+    setImportData(null);
+    alert('Importação concluída!');
+  };
+
   // Exporta o plano de contas como JSON
   const exportarJSON = () => {
     const dataStr = JSON.stringify(contas, null, 2);
@@ -1647,6 +1688,20 @@ export default function PlanoDeContas() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+      {/* Modal de confirmação de importação */}
+      {showImportConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-4">Importar plano de contas</h2>
+            <p className="mb-4">Deseja <b>sobrescrever</b> todas as contas atuais ou <b>mesclar</b> apenas as novas?</p>
+            <div className="flex gap-2">
+              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onClick={() => confirmarImportacao(true)}>Sobrescrever</button>
+              <button className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700" onClick={() => confirmarImportacao(false)}>Mesclar</button>
+              <button className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400" onClick={() => { setShowImportConfirm(false); setImportData(null); }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
       <Header />
 
       {/* Main Content */}
@@ -1676,6 +1731,26 @@ export default function PlanoDeContas() {
                     {!modoCompacto && 'Nova Conta Raiz'}
                   </button>
                 )}
+                {/* Botão de importação */}
+                <div className="relative">
+                  <button
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 border border-gray-300"
+                    title="Importar plano de contas"
+                    onClick={handleImportClick}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20V8m0 12l-4-4m4 4l4-4m-4 4V8" />
+                    </svg>
+                    Importar
+                  </button>
+                  <input
+                    type="file"
+                    accept="application/json"
+                    ref={fileInputRef}
+                    onChange={importarContas}
+                    style={{ display: 'none' }}
+                  />
+                </div>
                 {/* Botão de exportação */}
                 <div className="relative">
                   <button
