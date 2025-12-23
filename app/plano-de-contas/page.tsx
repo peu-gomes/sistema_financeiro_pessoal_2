@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
 import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
