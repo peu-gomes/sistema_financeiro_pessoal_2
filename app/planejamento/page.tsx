@@ -561,7 +561,14 @@ export default function Planejamento() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orcamentoAtual.itens.map((item) => {
+                      {[...orcamentoAtual.itens]
+                        .sort((a, b) => {
+                          // Receitas primeiro, depois despesas
+                          if (a.categoria === b.categoria) return 0;
+                          if (a.categoria === 'receita') return -1;
+                          return 1;
+                        })
+                        .map((item) => {
                         const valorPlanejado = item.valorPlanejado || 0;
                         const valorConvertido = visualizacao === 'mensal'
                           ? calcularValorMensal(valorPlanejado, item.periodicidade)
@@ -660,7 +667,14 @@ export default function Planejamento() {
 
                 {/* Cards Mobile */}
                 <div className="md:hidden space-y-3">
-                  {orcamentoAtual.itens.map((item) => {
+                  {[...orcamentoAtual.itens]
+                    .sort((a, b) => {
+                      // Receitas primeiro, depois despesas
+                      if (a.categoria === b.categoria) return 0;
+                      if (a.categoria === 'receita') return -1;
+                      return 1;
+                    })
+                    .map((item) => {
                     const valorConvertido = visualizacao === 'mensal'
                       ? calcularValorMensal(item.valorPlanejado, item.periodicidade)
                       : calcularValorAnual(item.valorPlanejado, item.periodicidade);
