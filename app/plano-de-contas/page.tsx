@@ -485,10 +485,8 @@ const ModalCriarConta = ({
   }, [isOpen, codigoPai, codigosExistentes, mascara]);
 
   const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value;
-    // Auto-formata o código com a máscara
-    const formatado = formatarCodigoComMascara(valor, mascara);
-    setCodigo(formatado);
+    // Permite digitação livre de códigos parciais (ex: 3.10)
+    setCodigo(e.target.value);
   };
 
   const handleSalvar = () => {
@@ -504,8 +502,8 @@ const ModalCriarConta = ({
       return;
     }
 
-    // Remove os _ para validar
-    const codigoFinal = codigo.replace(/_/g, '');
+    // Remove espaços extras
+    const codigoFinal = codigo.trim();
 
     // Permite códigos parciais válidos conforme a máscara
     if (!validarCodigo(codigoFinal, mascara)) {
