@@ -15,25 +15,40 @@ export async function GET() {
   try {
     // planto-de-contas.json pode ser {contas: []} ou [] — normalizamos para array
     const raw = await getOrSeed<any>(KV_KEYS.contas, 'data/plano-de-contas.json', [])
+    console.log('[DEBUG][GET] Conteúdo bruto do plano de contas:', JSON.stringify(raw).slice(0, 500))
     const contas: ContaBancaria[] = Array.isArray(raw) ? raw : raw?.contas ?? []
+    if (!Array.isArray(contas)) {
+      console.error('[ERRO][GET] Formato inesperado do plano de contas:', raw)
+      return NextResponse.json({ error: 'Formato inesperado do plano de contas', raw }, { status: 500 })
+    }
     return NextResponse.json(contas)
-  } catch (error) {
-    console.error('Erro ao buscar plano de contas:', error)
-    return NextResponse.json({ error: 'Erro ao buscar plano de contas' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[ERRO][GET] Erro ao buscar plano de contas:', error?.message, error)
+    return NextResponse.json({ error: 'Erro ao buscar plano de contas', details: error?.message, stack: error?.stack }, { status: 500 })
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const body = await request.json()
-    const contas: ContaBancaria[] = Array.isArray(body) ? body : body?.contas
-    if (!Array.isArray(contas)) {
-      return NextResponse.json({ error: 'Formato inválido' }, { status: 400 })
+    const bodyText = await request.text();
+    console.log('[DEBUG][PUT] Body recebido:', bodyText.slice(0, 500));
+    let body;
+    try {
+      body = JSON.parse(bodyText);
+    } catch (parseError) {
+      console.error('[ERRO][PUT] Erro de parsing do JSON:', parseError, bodyText);
+      return NextResponse.json({ error: 'JSON inválido', details: parseError?.message }, { status: 400 });
     }
-    await setJSON<ContaBancaria[]>(KV_KEYS.contas, contas)
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Erro ao salvar plano de contas:', error)
-    return NextResponse.json({ error: 'Erro ao salvar plano de contas' }, { status: 500 })
+    const contas: ContaBancaria[] = Array.isArray(body) ? body : body?.contas;
+    if (!Array.isArray(contas)) {
+      console.error('[ERRO][PUT] Formato inválido do body:', body);
+      return NextResponse.json({ error: 'Formato inválido', body }, { status: 400 });
+    }
+    await setJSON<ContaBancaria[]>(KV_KEYS.contas, contas);
+    console.log('[DEBUG][PUT] Plano de contas salvo com sucesso. Total de contas:', contas.length);
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('[ERRO][PUT] Erro ao salvar plano de contas:', error?.message, error);
+    return NextResponse.json({ error: 'Erro ao salvar plano de contas', details: error?.message, stack: error?.stack }, { status: 500 });
   }
 }
