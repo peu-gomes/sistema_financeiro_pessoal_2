@@ -1088,6 +1088,7 @@ const buildPreviewFromSugestao = (
 // Página principal
 export default function PlanoDeContas() {
   const [contas, setContas] = useState<ContaBancaria[]>([]);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [configuracoes, setConfiguracoes] = useState<any>(null);
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [mascara, setMascara] = useState(getMascaraPadrao().mascara);
@@ -1668,6 +1669,26 @@ export default function PlanoDeContas() {
                   )}
                 </div>
                 <div className="flex-1" />
+                {/* Botão de exportação */}
+                <div className="relative">
+                  <button
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 border border-gray-300"
+                    title="Exportar plano de contas"
+                    onClick={() => setShowExportMenu((v) => !v)}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v12m0 0l-4-4m4 4l4-4m-4 4V4" />
+                    </svg>
+                    <span>Exportar</span>
+                  </button>
+                  {showExportMenu && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                      <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => { /* exportar JSON */ setShowExportMenu(false); }}>Exportar JSON</button>
+                      <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => { /* exportar CSV */ setShowExportMenu(false); }}>Exportar CSV</button>
+                      <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => { /* exportar Excel */ setShowExportMenu(false); }}>Exportar Excel</button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="relative">
