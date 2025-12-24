@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import AutocompleteComboBox from '@/components/AutocompleteComboBox';
 import type { ContaBancariaImportacao, RegraClassificacao, CsvCampoPadrao, CsvLayoutConfig } from '@/lib/api';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
@@ -454,23 +455,21 @@ export default function ConfiguracaoBancos() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Código da Receita Padrão</label>
-                      <input
-                        type="text"
-                        value={draft.contaPadraoReceita || ''}
-                        placeholder="Ex: 4.1.01.001"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
-                        onChange={(e) => atualizarDraft({ contaPadraoReceita: e.target.value })}
+                      <AutocompleteComboBox
+                        options={contasAnaliticas.map((c) => ({ value: c.codigo, label: `${c.codigo} - ${c.nome}` }))}
+                        value={draft.contaPadraoReceita || '3.9.01.001'}
+                        onChange={(codigo, label) => atualizarDraft({ contaPadraoReceita: codigo })}
+                        placeholder="Buscar receita analítica..."
                       />
                       <p className="text-xs text-gray-500 mt-1">Conta usada para entradas sem classificação</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Código da Despesa Padrão</label>
-                      <input
-                        type="text"
-                        value={draft.contaPadraoDespesa || ''}
-                        placeholder="Ex: 5.99.99.999"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm"
-                        onChange={(e) => atualizarDraft({ contaPadraoDespesa: e.target.value })}
+                      <AutocompleteComboBox
+                        options={contasAnaliticas.map((c) => ({ value: c.codigo, label: `${c.codigo} - ${c.nome}` }))}
+                        value={draft.contaPadraoDespesa || '4.5.01.001'}
+                        onChange={(codigo, label) => atualizarDraft({ contaPadraoDespesa: codigo })}
+                        placeholder="Buscar despesa analítica..."
                       />
                       <p className="text-xs text-gray-500 mt-1">Conta usada para saídas sem classificação</p>
                     </div>
