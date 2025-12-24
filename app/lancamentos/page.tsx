@@ -841,21 +841,15 @@ export default function Lancamentos() {
         };
       }
 
-      // 3. Usa conta padrão do banco como fallback (tudo configurável em Configuração de Bancos)
-      const contaPadrao = reg.tipo === 'entrada' ? bancoConta?.contaPadraoReceita : bancoConta?.contaPadraoDespesa;
-
-      if (contaPadrao) {
-        const conta = contasAnaliticas.find((c) => c.codigo === contaPadrao);
-        return {
-          ...reg,
-          contaSugerida: contaPadrao,
-          contaSugeridaNome: conta?.nome || contaPadrao,
-          confianca: 50,
-          razaoSugestao: 'Conta padrão do banco',
-        };
-      }
-
-      return reg;
+      // 3. NÃO sugerir conta padrão do banco se não houver regra
+      // Se não houver regra nem sugestão IA, não sugerir nada
+      return {
+        ...reg,
+        contaSugerida: undefined,
+        contaSugeridaNome: undefined,
+        confianca: undefined,
+        razaoSugestao: undefined,
+      };
     });
 
       // Adiciona campos de conferência e IDs estáveis por ordem
