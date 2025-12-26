@@ -1,3 +1,21 @@
+## Como atualizar manualmente o KV (banco de dados/cache) com as configurações dos bancos
+
+Se as sugestões de contas continuam aparecendo incorretamente, pode ser que o KV (banco de dados/cache) não esteja sincronizado com o arquivo `public/data/configuracoes.json`.
+
+Para garantir que o KV use as configurações corretas:
+
+1. Abra o arquivo `public/data/configuracoes.json` e copie todo o conteúdo.
+2. Use uma ferramenta como [Insomnia](https://insomnia.rest/) ou [Postman](https://www.postman.com/) para fazer uma requisição HTTP PUT para a API:
+	- URL: `http://localhost:3000/api/configuracoes` (ajuste a porta se necessário)
+	- Método: PUT
+	- Body: Cole o conteúdo do arquivo `configuracoes.json` como JSON
+	- Headers: `Content-Type: application/json`
+3. Envie a requisição. Se tudo estiver correto, a resposta será o JSON atualizado.
+4. Recarregue o sistema e teste a importação novamente.
+
+**Dica:** Se estiver em produção, use a URL do seu servidor.
+
+Isso força o KV a usar exatamente o que está no arquivo, corrigindo problemas de sincronização entre o banco de dados e o arquivo local.
 # 🚀 Como Iniciar o Servidor
 
 ## Opção 1: Duplo clique (Mais Fácil)

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getOrSeed, setJSON, KV_KEYS } from '@/lib/kv'
+import type { ContaBancariaImportacao } from '@/lib/api'
 
 type Partida = {
   id: string
@@ -28,7 +29,7 @@ async function writeLancamentos(data: Lancamento[]) {
   await setJSON<Lancamento[]>(KV_KEYS.lancamentos, data)
 }
 
-export async function POST(request: Request) {
+
   try {
     const body = await request.json();
     const lancamentosImportados: Partial<Lancamento>[] = Array.isArray(body?.lancamentos) ? body.lancamentos : [];
@@ -38,28 +39,31 @@ export async function POST(request: Request) {
     const lancamentos = await readLancamentos();
     const agora = Date.now();
 
-    // Códigos padrão para "sem categorização"
-    const CONTA_SEM_CATEG_DESPESA = '4.999.01';
-    const NOME_SEM_CATEG_DESPESA = 'Sem Categorização (Despesa)';
-    const CONTA_SEM_CATEG_RECEITA = '3.999.01';
-    const NOME_SEM_CATEG_RECEITA = 'Sem Categorização (Receita)';
+    // Buscar contas bancárias configuradas
+    const config = await getOrSeed<any>(KV_KEYS.configuracoes, 'data/configuracoes.json', {});
+    const contasBancarias: ContaBancariaImportacao[] = Array.isArray(config?.contasBancarias) ? config.contasBancarias : [];
+
+    function getContaPadrao(natureza: 'debito' | 'credito') {
+      // Procura a primeira conta bancária ativa e padrão para o tipo
+      const conta = contasBancarias.find(cb => cb.ativa && cb.padrao);
+      if (!conta) return { codigo: '', nome: '' };
+      if (natureza === 'credito' && conta.contaPadraoReceita) {
+        return { codigo: conta.contaPadraoReceita, nome: '' };
+      }
+      if (natureza === 'debito' && conta.contaPadraoDespesa) {
+        return { codigo: conta.contaPadraoDespesa, nome: '' };
+      }
+      return { codigo: '', nome: '' };
+    }
 
     function categorizarPartida(partida: any) {
       if (!partida.contaCodigo || !partida.contaNome) {
-        // Heurística simples: se for crédito, assume receita; débito, despesa
-        if (partida.natureza === 'credito') {
-          return {
-            ...partida,
-            contaCodigo: CONTA_SEM_CATEG_RECEITA,
-            contaNome: NOME_SEM_CATEG_RECEITA,
-          };
-        } else {
-          return {
-            ...partida,
-            contaCodigo: CONTA_SEM_CATEG_DESPESA,
-            contaNome: NOME_SEM_CATEG_DESPESA,
-          };
-        }
+        const padrao = getContaPadrao(partida.natureza);
+        return {
+          ...partida,
+          contaCodigo: padrao.codigo,
+          contaNome: padrao.nome,
+        };
       }
       return partida;
     }
