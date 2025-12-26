@@ -9,7 +9,7 @@ type Partida = {
   contaNome: string
   natureza: 'debito' | 'credito'
   valor: number
-};
+}
 
 type Lancamento = {
   id: string
