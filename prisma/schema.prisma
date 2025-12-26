@@ -4,7 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Use the Supabase-provided variable available in Vercel integration
+  url      = env("POSTGRES_PRISMA_URL")
 }
 
 model Lancamento {

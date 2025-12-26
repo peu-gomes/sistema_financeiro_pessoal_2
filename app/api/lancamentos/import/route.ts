@@ -1,53 +1,40 @@
 
+import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
 
+const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // Exemplo: espera body = { data, historico, documento, partidas: [{contaCodigo, contaNome, natureza, valor}] }
+    // Expect body = { data, historico, documento, partidas: [{contaCodigo, contaNome, natureza, valor}] }
+    if (!body || !Array.isArray(body.partidas)) {
+      return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
+    }
+
     const lancamento = await prisma.lancamento.create({
       data: {
         data: new Date(body.data),
         historico: body.historico,
         documento: body.documento,
         partidas: {
-          create: body.partidas
-        }
+          create: body.partidas.map((p: any) => ({
+            contaCodigo: p.contaCodigo || '',
+            contaNome: p.contaNome || '',
+            natureza: p.natureza || 'debito',
+            valor: Number(p.valor) || 0,
+          })),
+        },
       },
-      include: { partidas: true }
+      include: { partidas: true },
     });
-    return Response.json(lancamento);
-  } catch (error) {
-    return Response.json({ error: 'Erro ao importar lançamentos', details: error?.message }, { status: 500 });
-  }
-}
-          contaCodigo: padrao.codigo,
-          contaNome: padrao.nome,
-        };
-      }
-      return partida;
-    }
 
-    const normalizados: Lancamento[] = lancamentosImportados.map((l, idx) => {
-      const partidasCorrigidas = Array.isArray(l.partidas)
-        ? l.partidas.map(categorizarPartida)
-        : [];
-      return {
-        ...(l as any),
-        id: l.id || `${agora}-${idx}`,
-        criadoEm: l?.criadoEm || new Date().toISOString(),
-        atualizadoEm: l?.atualizadoEm || new Date().toISOString(),
-        partidas: partidasCorrigidas,
-      };
-    }) as Lancamento[];
-
-    lancamentos.push(...normalizados);
-    await writeLancamentos(lancamentos);
-      return NextResponse.json({ inseridos: normalizados.length });
-  } catch (error) {
-    console.error('Erro ao importar lançamentos:', error);
-      return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
+    return NextResponse.json(lancamento);
+  } catch (error: any) {
+    console.error('Erro ao criar lançamento:', error);
+    return NextResponse.json({ error: 'Erro ao importar lançamentos', details: error?.message }, { status: 500 });
+  } finally {
+    // optional: disconnect prisma on edge or long-running environments
+    // await prisma.$disconnect();
   }
 }
