@@ -1,3 +1,4 @@
+"use server";
 import { NextResponse } from 'next/server'
 import { getOrSeed, setJSON, KV_KEYS } from '@/lib/kv'
 import type { ContaBancariaImportacao } from '@/lib/api'
