@@ -12,11 +12,13 @@
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0",
+    "@prisma/client": "^5.5.0",
     "next": "16.0.7",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "prisma": "^5.5.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
