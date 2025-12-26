@@ -9,7 +9,7 @@ type Partida = {
   contaNome: string
   natureza: 'debito' | 'credito'
   valor: number
-}
+};
 
 type Lancamento = {
   id: string
@@ -105,12 +105,12 @@ export async function POST(request: Request) {
     }) as Lancamento[];
     lancamentos.push(...normalizados);
     await writeLancamentos(lancamentos);
+
     return NextResponse.json({ inseridos: normalizados.length });
   } catch (error) {
     console.error('Erro ao importar lançamentos:', error);
     return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
   }
-  atualizadoEm?: string
 }
 
 async function readLancamentos(): Promise<Lancamento[]> {
