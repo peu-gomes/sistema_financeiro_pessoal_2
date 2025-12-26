@@ -92,29 +92,21 @@ export async function POST(request: Request) {
       return partida;
     }
     const normalizados: Lancamento[] = lancamentosImportados.map((l, idx) => {
-      const partidasCorrigidas = Array.isArray(l.partidas)
-        ? l.partidas.map(categorizarPartida)
-        : [];
-      return {
-        ...(l as any),
-        id: l.id || `${agora}-${idx}`,
-        criadoEm: l?.criadoEm || new Date().toISOString(),
-        atualizadoEm: l?.atualizadoEm || new Date().toISOString(),
-        partidas: partidasCorrigidas,
-      };
-    }) as Lancamento[];
-    lancamentos.push(...normalizados);
-    await writeLancamentos(lancamentos);
-    import { readLancamentos, writeLancamentos } from '@/lib/kvService';
-    return NextResponse.json({ inseridos: normalizados.length });
-  } catch (error) {
-    if (lancamentosImportados.length === 0) {
-        return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 });
-    }
-    const lancamentos = await readLancamentos();
-    const agora = Date.now();
+        import { PrismaClient } from '@prisma/client';
+        const prisma = new PrismaClient();
 
-    // Buscar contas bancárias configuradas
+        const lancamento = await prisma.lancamento.create({
+          data: {
+            data: new Date(body.data),
+            historico: body.historico,
+            documento: body.documento,
+            partidas: {
+              create: body.partidas
+            }
+          },
+          include: { partidas: true }
+        });
+        return NextResponse.json(lancamento);
     const config = await getOrSeed<any>(KV_KEYS.configuracoes, 'data/configuracoes.json', {});
     const contasBancarias: ContaBancariaImportacao[] = Array.isArray(config?.contasBancarias) ? config.contasBancarias : [];
 
