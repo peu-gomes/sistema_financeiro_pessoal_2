@@ -105,27 +105,9 @@ export async function POST(request: Request) {
     }) as Lancamento[];
     lancamentos.push(...normalizados);
     await writeLancamentos(lancamentos);
-
+    import { readLancamentos, writeLancamentos } from '@/lib/kvService';
     return NextResponse.json({ inseridos: normalizados.length });
   } catch (error) {
-    console.error('Erro ao importar lançamentos:', error);
-    return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
-  }
-}
-
-async function readLancamentos(): Promise<Lancamento[]> {
-  const data = await getOrSeed<Lancamento[]>(KV_KEYS.lancamentos, 'data/lancamentos.json', [])
-  return Array.isArray(data) ? data : []
-}
-
-async function writeLancamentos(data: Lancamento[]) {
-  await setJSON<Lancamento[]>(KV_KEYS.lancamentos, data)
-}
-
-
-  try {
-    const body = await request.json();
-    const lancamentosImportados: Partial<Lancamento>[] = Array.isArray(body?.lancamentos) ? body.lancamentos : [];
     if (lancamentosImportados.length === 0) {
         return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 });
     }
@@ -142,6 +124,8 @@ async function writeLancamentos(data: Lancamento[]) {
       if (!conta) return { codigo: '', nome: '' };
       if (natureza === 'credito' && conta.contaPadraoReceita) {
         return { codigo: conta.contaPadraoReceita, nome: '' };
+        const lancamentos = await readLancamentos();
+        const agora = Date.now();
       }
       if (natureza === 'debito' && conta.contaPadraoDespesa) {
         return { codigo: conta.contaPadraoDespesa, nome: '' };
