@@ -92,8 +92,10 @@ export async function POST(request: Request) {
       return partida;
     }
     const normalizados: Lancamento[] = lancamentosImportados.map((l, idx) => {
-        import { PrismaClient } from '@prisma/client';
-        const prisma = new PrismaClient();
+    // ...existing code...
+
+    import { PrismaClient } from '@prisma/client';
+    const prisma = new PrismaClient();
 
         const lancamento = await prisma.lancamento.create({
           data: {
