@@ -34,7 +34,7 @@ async function writeLancamentos(data: Lancamento[]) {
     const body = await request.json();
     const lancamentosImportados: Partial<Lancamento>[] = Array.isArray(body?.lancamentos) ? body.lancamentos : [];
     if (lancamentosImportados.length === 0) {
-      return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 });
+        return NextResponse.json({ error: 'Nenhum lançamento fornecido para importação' }, { status: 400 });
     }
     const lancamentos = await readLancamentos();
     const agora = Date.now();
@@ -83,9 +83,9 @@ async function writeLancamentos(data: Lancamento[]) {
 
     lancamentos.push(...normalizados);
     await writeLancamentos(lancamentos);
-    return NextResponse.json({ inseridos: normalizados.length });
+      return NextResponse.json({ inseridos: normalizados.length });
   } catch (error) {
     console.error('Erro ao importar lançamentos:', error);
-    return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
+      return NextResponse.json({ error: 'Erro ao importar lançamentos' }, { status: 500 });
   }
 }
