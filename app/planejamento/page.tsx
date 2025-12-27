@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { TouchEvent } from 'react';
 import Header from '@/components/Header';
 import FilterBar from '@/components/FilterBar';
-import { getContas, type ContaBancaria } from '@/lib/api';
+import { getContasSupabase, type ContaBancaria } from '@/lib/api';
 import { useScrollCompact } from '@/lib/hooks/useScrollCompact';
 import { 
   getOrcamentos,
@@ -72,7 +72,7 @@ export default function Planejamento() {
   }, [orcamentoFixo, orcamentoMensal]);
 
   const carregarDados = async () => {
-    const contasData = await getContas();
+    const contasData = await getContasSupabase();
     setContas(contasData);
     
     // Extrair contas analíticas de receita e despesa

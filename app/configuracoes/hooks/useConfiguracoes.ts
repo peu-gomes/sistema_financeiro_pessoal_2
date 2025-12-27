@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getConfiguracoes,
   saveConfiguracoes,
-  getContas,
+  getContasSupabase,
   type Configuracoes,
   type AutoPatternConfig,
   type ContaBancaria,
@@ -65,7 +65,7 @@ export function useConfiguracoesData() {
 
       setAutoPatterns(normalizarPadroes(config.autoPatterns));
 
-      const contas = await getContas();
+      const contas = await getContasSupabase();
       setContasRaiz(contas);
 
       if (config.contasBancarias) {

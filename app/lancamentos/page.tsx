@@ -10,7 +10,7 @@ import {
   getLancamentos,
   createLancamento,
   deleteLancamento,
-  getContas,
+  getContasSupabase,
   getConfiguracoes,
   saveConfiguracoes,
   importLancamentos,
@@ -1229,7 +1229,7 @@ export default function Lancamentos() {
   useEffect(() => {
     const carregarContas = async () => {
       try {
-        const todasContas = await getContas();
+        const todasContas = await getContasSupabase();
         const analiticas = extrairContasAnaliticas(todasContas);
         setContasAnaliticas(analiticas);
 

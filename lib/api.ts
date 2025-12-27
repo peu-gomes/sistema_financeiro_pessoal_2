@@ -144,33 +144,6 @@ export interface Partida {
   valor: number;
 }
 
-// ===== CONTAS =====
-
-export async function getContas(): Promise<ContaBancaria[]> {
-  try {
-    const response = await fetch('/api/contas', { cache: 'no-store' });
-    if (!response.ok) throw new Error('Erro ao buscar plano de contas');
-    const data = await response.json();
-    return Array.isArray(data) ? data : (data?.contas || []);
-  } catch (error) {
-    console.error('Erro ao buscar contas:', error);
-    throw error;
-  }
-}
-
-export async function saveContas(contas: ContaBancaria[]): Promise<void> {
-  try {
-    const response = await fetch('/api/contas', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contas }),
-    });
-    if (!response.ok) throw new Error('Erro ao salvar plano de contas');
-  } catch (error) {
-    console.error('Erro ao salvar contas:', error);
-    throw error;
-  }
-}
 
 // ===== LANÇAMENTOS =====
 
