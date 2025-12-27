@@ -36,7 +36,7 @@ export async function saveContasSupabase(contas: ContaBancaria[]): Promise<void>
   }));
   const { error } = await supabase
     .from('plano_de_contas')
-    .upsert(upsertData, { onConflict: ['id'] });
+    .upsert(upsertData, { onConflict: 'id' });
   if (error) throw error;
 }
 export interface ContaBancaria {
