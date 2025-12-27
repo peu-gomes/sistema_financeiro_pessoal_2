@@ -17,7 +17,7 @@ import {
   validarMascara
 } from '@/lib/maskUtils';
 import { getIconeCategoria, ICONES_PADRAO } from '@/lib/iconesUtils';
-import { getContas, saveContas, getConfiguracoes } from '@/lib/api';
+import { getContasSupabase, saveContasSupabase, getConfiguracoes } from '@/lib/api';
 import type { ContaBancaria } from '@/lib/api';
 
 interface SugestaoIA {
@@ -1231,7 +1231,7 @@ export default function PlanoDeContas() {
     const carregarDados = async () => {
       try {
         // Carregar contas
-        const contasAPI = await getContas();
+        const contasAPI = await getContasSupabase();
         setContas(contasAPI);
 
         // Carregar configurações
@@ -1268,9 +1268,9 @@ export default function PlanoDeContas() {
 
     const salvarContas = async () => {
       try {
-        await saveContas(contas);
+        await saveContasSupabase(contas);
       } catch (error) {
-        console.error('Erro ao salvar contas:', error);
+        console.error('Erro ao salvar contas no Supabase:', error);
       }
     };
 

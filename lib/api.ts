@@ -4,6 +4,41 @@
  */
 
 // Tipos
+import { supabase } from './supabaseClient';
+// Funções Supabase para plano de contas
+export async function getContasSupabase(): Promise<ContaBancaria[]> {
+  const { data, error } = await supabase
+    .from('plano_de_contas')
+    .select('*');
+  if (error) throw error;
+  // Adapta para o tipo ContaBancaria, se necessário
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    codigo: item.codigo,
+    nome: item.nome,
+    tipoCC: item.tipo_cc || 'analitica',
+    categoria: item.categoria,
+    ativa: item.ativa ?? true,
+    subcontas: [], // Carregamento de subcontas pode ser implementado depois
+  }));
+}
+
+export async function saveContasSupabase(contas: ContaBancaria[]): Promise<void> {
+  // Para simplificação, faz upsert de todas as contas
+  const upsertData = contas.map((c) => ({
+    id: c.id,
+    codigo: c.codigo,
+    nome: c.nome,
+    tipo_cc: c.tipoCC,
+    categoria: c.categoria,
+    ativa: c.ativa,
+    // parent_id pode ser adicionado se houver hierarquia
+  }));
+  const { error } = await supabase
+    .from('plano_de_contas')
+    .upsert(upsertData, { onConflict: ['id'] });
+  if (error) throw error;
+}
 export interface ContaBancaria {
   id: string;
   codigo: string;
